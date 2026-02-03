@@ -1,0 +1,1350 @@
+{% extends "base.html" %}
+
+{% block title %}Каталог роскошной одежды | {{ shop_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Catalog Header */
+    .catalog-header {
+        padding: 60px 0 40px;
+        background: linear-gradient(135deg, var(--secondary-bg) 0%, var(--primary-bg) 100%);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .catalog-header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 40px;
+    }
+    
+    .catalog-title-section h1 {
+        font-size: 3rem;
+        margin-bottom: 10px;
+    }
+    
+    .catalog-stats {
+        display: flex;
+        gap: 20px;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .catalog-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    /* Catalog Layout */
+    .catalog-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 40px;
+        padding: 40px 0 80px;
+    }
+    
+    /* Sidebar */
+    .catalog-sidebar {
+        position: sticky;
+        top: calc(var(--header-height) + 20px);
+        height: calc(100vh - var(--header-height) - 40px);
+        overflow-y: auto;
+        padding-right: 20px;
+    }
+    
+    .sidebar-section {
+        background: var(--card-bg);
+        border-radius: var(--radius-xl);
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow-md);
+    }
+    
+    .sidebar-section h3 {
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .sidebar-section h3 i {
+        color: var(--gold);
+    }
+    
+    /* Categories */
+    .categories-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .category-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border-radius: var(--radius-md);
+        transition: all var(--transition-fast);
+        cursor: pointer;
+    }
+    
+    .category-item:hover {
+        background: var(--surface-bg);
+    }
+    
+    .category-item.active {
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%);
+        color: var(--gold);
+        border-left: 3px solid var(--gold);
+    }
+    
+    .category-name {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 500;
+    }
+    
+    .category-count {
+        background: var(--surface-bg);
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+    }
+    
+    /* Price Filter */
+    .price-range {
+        padding: 20px 0;
+    }
+    
+    .price-inputs {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .price-input {
+        flex: 1;
+        padding: 12px 16px;
+        background: var(--surface-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        transition: all var(--transition-fast);
+    }
+    
+    .price-input:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+    }
+    
+    .price-slider {
+        height: 4px;
+        background: var(--border-color);
+        border-radius: 2px;
+        position: relative;
+        margin: 30px 0;
+    }
+    
+    .price-slider .progress {
+        height: 100%;
+        background: linear-gradient(90deg, var(--gold) 0%, var(--gold-dark) 100%);
+        border-radius: 2px;
+        position: absolute;
+        left: 25%;
+        right: 25%;
+    }
+    
+    .range-input {
+        position: absolute;
+        width: 100%;
+        height: 4px;
+        background: none;
+        pointer-events: none;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    .range-input::-webkit-slider-thumb {
+        height: 18px;
+        width: 18px;
+        border-radius: var(--radius-full);
+        background: var(--gold);
+        pointer-events: auto;
+        -webkit-appearance: none;
+        cursor: pointer;
+        box-shadow: var(--shadow-md);
+    }
+    
+    /* Checkbox Filter */
+    .filter-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .filter-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        padding: 8px 0;
+    }
+    
+    .filter-checkbox {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-fast);
+    }
+    
+    .filter-checkbox.checked {
+        background: var(--gold);
+        border-color: var(--gold);
+    }
+    
+    .filter-checkbox.checked::after {
+        content: '✓';
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .filter-label {
+        flex: 1;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+    
+    .filter-count {
+        background: var(--surface-bg);
+        color: var(--text-tertiary);
+        font-size: 0.75rem;
+        padding: 3px 8px;
+        border-radius: var(--radius-full);
+    }
+    
+    /* Colors */
+    .colors-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    
+    .color-item {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-full);
+        cursor: pointer;
+        position: relative;
+        transition: transform var(--transition-fast);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .color-item:hover {
+        transform: scale(1.1);
+    }
+    
+    .color-item.active::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    /* Sizes */
+    .sizes-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+    
+    .size-item {
+        min-width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface-bg);
+        border-radius: var(--radius-md);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .size-item:hover {
+        background: var(--tertiary-bg);
+    }
+    
+    .size-item.active {
+        background: var(--gold);
+        color: var(--text-inverse);
+        box-shadow: var(--shadow-gold);
+    }
+    
+    /* Clear Filters */
+    .clear-filters {
+        width: 100%;
+        padding: 12px;
+        background: transparent;
+        color: var(--gold);
+        border: 1px solid var(--gold);
+        border-radius: var(--radius-lg);
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all var(--transition-fast);
+    }
+    
+    .clear-filters:hover {
+        background: rgba(212, 175, 55, 0.1);
+    }
+    
+    /* Catalog Content */
+    .catalog-content {
+        flex: 1;
+    }
+    
+    /* Toolbar */
+    .catalog-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: var(--card-bg);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .toolbar-left, .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .sort-select {
+        padding: 10px 40px 10px 16px;
+        background: var(--surface-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23d4af37' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        background-size: 16px;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .sort-select:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+    }
+    
+    .view-toggle {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .view-btn {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface-bg);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        transition: all var(--transition-fast);
+    }
+    
+    .view-btn:hover {
+        background: var(--tertiary-bg);
+        color: var(--text-primary);
+    }
+    
+    .view-btn.active {
+        background: var(--gold);
+        color: var(--text-inverse);
+    }
+    
+    .grid-size {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .grid-slider {
+        width: 120px;
+        height: 4px;
+        background: var(--border-color);
+        border-radius: 2px;
+        position: relative;
+    }
+    
+    .grid-slider input {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: none;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    .grid-slider input::-webkit-slider-thumb {
+        height: 16px;
+        width: 16px;
+        border-radius: var(--radius-full);
+        background: var(--gold);
+        cursor: pointer;
+        -webkit-appearance: none;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    /* Products Grid */
+    .catalog-products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 30px;
+        margin-bottom: 60px;
+    }
+    
+    .catalog-products-grid.compact {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 20px;
+    }
+    
+    .catalog-products-grid.list-view {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .catalog-products-grid.list-view .product-card {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        height: auto;
+    }
+    
+    .catalog-products-grid.list-view .product-image {
+        height: 200px;
+    }
+    
+    .catalog-products-grid.list-view .product-actions {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    
+    /* Pagination */
+    .catalog-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 60px;
+    }
+    
+    .page-btn {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface-bg);
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all var(--transition-fast);
+    }
+    
+    .page-btn:hover:not(.disabled) {
+        background: var(--tertiary-bg);
+        transform: translateY(-2px);
+    }
+    
+    .page-btn.active {
+        background: var(--gold);
+        color: var(--text-inverse);
+        box-shadow: var(--shadow-gold);
+    }
+    
+    .page-btn.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    /* Empty State */
+    .catalog-empty {
+        text-align: center;
+        padding: 80px 20px;
+    }
+    
+    .catalog-empty-icon {
+        font-size: 5rem;
+        color: var(--gold);
+        margin-bottom: 30px;
+        opacity: 0.5;
+    }
+    
+    .catalog-empty h2 {
+        font-size: 2rem;
+        margin-bottom: 15px;
+    }
+    
+    .catalog-empty p {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        margin-bottom: 30px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    /* Responsive Catalog */
+    @media (max-width: 992px) {
+        .catalog-layout {
+            grid-template-columns: 1fr;
+        }
+        
+        .catalog-sidebar {
+            position: static;
+            height: auto;
+            margin-bottom: 40px;
+        }
+        
+        .catalog-header-content {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
+        .catalog-toolbar {
+            flex-direction: column;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        .toolbar-left, .toolbar-right {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .catalog-products-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+        
+        .catalog-title-section h1 {
+            font-size: 2.5rem;
+        }
+        
+        .catalog-stats {
+            flex-direction: column;
+            gap: 10px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .catalog-products-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .price-inputs {
+            flex-direction: column;
+        }
+        
+        .catalog-title-section h1 {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Catalog Header -->
+    <div class="catalog-header">
+        <div class="container">
+            <div class="catalog-header-content">
+                <div class="catalog-title-section">
+                    <h1>КАТАЛОГ</h1>
+                    <div class="catalog-stats">
+                        <span>Показано: <strong>{{ products.total }} товаров</strong></span>
+                        <span>Категория: <strong>{{ current_category|default('Все') }}</strong></span>
+                    </div>
+                </div>
+                <div class="catalog-controls">
+                    <a href="{{ url_for('index') }}" class="btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>На главную</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="catalog-layout">
+            <!-- Sidebar -->
+            <aside class="catalog-sidebar">
+                <!-- Categories -->
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-list"></i> Категории</h3>
+                    <div class="categories-list">
+                        <a href="{{ url_for('catalog_page') }}" class="category-item {% if current_category == 'all' %}active{% endif %}">
+                            <span class="category-name">
+                                <i class="fas fa-th-large"></i>
+                                <span>Все товары</span>
+                            </span>
+                            <span class="category-count">{{ total_products }}</span>
+                        </a>
+                        {% for category in categories %}
+                        <a href="{{ url_for('catalog_page', category=category) }}" class="category-item {% if current_category == category %}active{% endif %}">
+                            <span class="category-name">
+                                {% if category == 'Платья' %}<i class="fas fa-tshirt"></i>
+                                {% elif category == 'Костюмы' %}<i class="fas fa-user-tie"></i>
+                                {% elif category == 'Блузы' %}<i class="fas fa-vest"></i>
+                                {% elif category == 'Брюки' %}<i class="fas fa-tshirt"></i>
+                                {% elif category == 'Юбки' %}<i class="fas fa-female"></i>
+                                {% elif category == 'Куртки' %}<i class="fas fa-vest"></i>
+                                {% elif category == 'Пальто' %}<i class="fas fa-tshirt"></i>
+                                {% elif category == 'Обувь' %}<i class="fas fa-shoe-prints"></i>
+                                {% elif category == 'Сумки' %}<i class="fas fa-shopping-bag"></i>
+                                {% elif category == 'Украшения' %}<i class="fas fa-gem"></i>
+                                {% else %}<i class="fas fa-tag"></i>{% endif %}
+                                <span>{{ category }}</span>
+                            </span>
+                            <span class="category-count">{{ products.total }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Price Filter -->
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-euro-sign"></i> Цена</h3>
+                    <div class="price-range">
+                        <div class="price-inputs">
+                            <input type="number" class="price-input" id="min-price" placeholder="От" value="0">
+                            <input type="number" class="price-input" id="max-price" placeholder="До" value="10000">
+                        </div>
+                        <div class="price-slider">
+                            <div class="progress"></div>
+                            <input type="range" class="range-input" id="range-min" min="0" max="10000" value="0" step="100">
+                            <input type="range" class="range-input" id="range-max" min="0" max="10000" value="10000" step="100">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Brands -->
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-crown"></i> Бренды</h3>
+                    <div class="filter-list">
+                        <div class="filter-item" data-filter="brand" data-value="vogue">
+                            <div class="filter-checkbox checked"></div>
+                            <span class="filter-label">VOGUE ÉLITE</span>
+                            <span class="filter-count">45</span>
+                        </div>
+                        <div class="filter-item" data-filter="brand" data-value="dior">
+                            <div class="filter-checkbox"></div>
+                            <span class="filter-label">Dior</span>
+                            <span class="filter-count">28</span>
+                        </div>
+                        <div class="filter-item" data-filter="brand" data-value="chanel">
+                            <div class="filter-checkbox"></div>
+                            <span class="filter-label">Chanel</span>
+                            <span class="filter-count">32</span>
+                        </div>
+                        <div class="filter-item" data-filter="brand" data-value="gucci">
+                            <div class="filter-checkbox"></div>
+                            <span class="filter-label">Gucci</span>
+                            <span class="filter-count">24</span>
+                        </div>
+                        <div class="filter-item" data-filter="brand" data-value="prada">
+                            <div class="filter-checkbox"></div>
+                            <span class="filter-label">Prada</span>
+                            <span class="filter-count">19</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colors -->
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-palette"></i> Цвета</h3>
+                    <div class="colors-list">
+                        <div class="color-item active" style="background: #000000;" title="Черный"></div>
+                        <div class="color-item" style="background: #ffffff; border: 1px solid var(--border-color);" title="Белый"></div>
+                        <div class="color-item" style="background: #c41e3a;" title="Красный"></div>
+                        <div class="color-item" style="background: #0f52ba;" title="Синий"></div>
+                        <div class="color-item" style="background: #50c878;" title="Зеленый"></div>
+                        <div class="color-item" style="background: #ffd700;" title="Золотой"></div>
+                        <div class="color-item" style="background: #c0c0c0;" title="Серебряный"></div>
+                        <div class="color-item" style="background: #800080;" title="Фиолетовый"></div>
+                        <div class="color-item" style="background: #ff6b6b;" title="Розовый"></div>
+                        <div class="color-item" style="background: #964b00;" title="Коричневый"></div>
+                        <div class="color-item" style="background: #808080;" title="Серый"></div>
+                        <div class="color-item" style="background: #ffa500;" title="Оранжевый"></div>
+                    </div>
+                </div>
+
+                <!-- Sizes -->
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-ruler-combined"></i> Размеры</h3>
+                    <div class="sizes-list">
+                        <div class="size-item active">XS</div>
+                        <div class="size-item">S</div>
+                        <div class="size-item">M</div>
+                        <div class="size-item">L</div>
+                        <div class="size-item">XL</div>
+                        <div class="size-item">XXL</div>
+                        <div class="size-item">36</div>
+                        <div class="size-item">38</div>
+                        <div class="size-item">40</div>
+                        <div class="size-item">42</div>
+                    </div>
+                </div>
+
+                <!-- Special Filters -->
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-star"></i> Особые</h3>
+                    <div class="filter-list">
+                        <div class="filter-item" data-filter="special" data-value="new">
+                            <div class="filter-checkbox"></div>
+                            <span class="filter-label">Новинки</span>
+                            <span class="filter-count">12</span>
+                        </div>
+                        <div class="filter-item" data-filter="special" data-value="sale">
+                            <div class="filter-checkbox"></div>
+                            <span class="filter-label">Со скидкой</span>
+                            <span class="filter-count">8</span>
+                        </div>
+                        <div class="filter-item" data-filter="special" data-value="exclusive">
+                            <div class="filter-checkbox"></div>
+                            <span class="filter-label">Эксклюзив</span>
+                            <span class="filter-count">5</span>
+                        </div>
+                        <div class="filter-item" data-filter="special" data-value="limited">
+                            <div class="filter-checkbox"></div>
+                            <span class="filter-label">Лимитированные</span>
+                            <span class="filter-count">3</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="clear-filters">
+                    <i class="fas fa-times"></i>
+                    <span>Сбросить фильтры</span>
+                </button>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="catalog-content">
+                <!-- Toolbar -->
+                <div class="catalog-toolbar">
+                    <div class="toolbar-left">
+                        <select class="sort-select" id="sort-select">
+                            <option value="newest">Сначала новинки</option>
+                            <option value="price-low">Сначала дешевые</option>
+                            <option value="price-high">Сначала дорогие</option>
+                            <option value="popular">По популярности</option>
+                            <option value="discount">По размеру скидки</option>
+                            <option value="rating">По рейтингу</option>
+                        </select>
+                        
+                        <div class="view-toggle">
+                            <button class="view-btn active" data-view="grid">
+                                <i class="fas fa-th-large"></i>
+                            </button>
+                            <button class="view-btn" data-view="list">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="grid-size">
+                            <span style="font-size: 0.9rem; color: var(--text-secondary);">Размер сетки:</span>
+                            <div class="grid-slider">
+                                <input type="range" min="1" max="3" value="2" id="grid-size">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="toolbar-right">
+                        <span style="font-size: 0.9rem; color: var(--text-secondary);">
+                            Страница {{ products.page }} из {{ products.pages }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                {% if products.items %}
+                <div class="catalog-products-grid" id="products-grid">
+                    {% for product in products.items %}
+                    <div class="product-card" 
+                         data-price="{{ product.price }}"
+                         data-category="{{ product.category }}"
+                         data-brand="{{ product.brand|default('vogue') }}"
+                         data-color="{{ product.color|default('черный') }}"
+                         data-size="{{ product.size|default('M') }}"
+                         data-new="{{ 'true' if product.is_new else 'false' }}"
+                         data-sale="{{ 'true' if product.discount > 0 else 'false' }}"
+                         data-exclusive="{{ 'true' if product.is_exclusive else 'false' }}">
+                        
+                        {% if product.is_new %}
+                        <div class="product-badges">
+                            <span class="product-badge badge-new">Новинка</span>
+                            {% if product.is_exclusive %}
+                            <span class="product-badge badge-exclusive">Эксклюзив</span>
+                            {% endif %}
+                            {% if product.discount %}
+                            <span class="product-badge badge-sale">-{{ product.discount }}%</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="product-image">
+                            {% if product.image_url %}
+                            <img src="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy">
+                            {% else %}
+                            <div style="width: 100%; height: 100%; background: var(--tertiary-bg); display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-image" style="font-size: 48px; color: var(--border-color);"></i>
+                            </div>
+                            {% endif %}
+                            <div class="product-actions">
+                                <button class="action-btn" title="В избранное">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                                <button class="action-btn" title="Быстрый просмотр">
+                                    <i class="far fa-eye"></i>
+                                </button>
+                                <button class="action-btn" title="Сравнить">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="product-info">
+                            <div class="product-category">{{ product.category }}</div>
+                            <h3 class="product-title">{{ product.name }}</h3>
+                            <p class="product-description">{{ product.description|truncate(120) }}</p>
+                            
+                            <div class="product-meta">
+                                <div class="product-price">
+                                    {% if product.discount %}
+                                    <span class="current-price">{{ (product.price * (100 - product.discount) / 100)|int }} €</span>
+                                    <span class="original-price">{{ product.price }} €</span>
+                                    {% else %}
+                                    <span class="current-price">{{ product.price }} €</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="product-rating">
+                                    <div class="stars">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                    <span class="rating-count">({{ (product.id % 50) + 10 }})</span>
+                                </div>
+                            </div>
+                            
+                            <div class="product-footer">
+                                <button class="btn-add-cart" data-product-id="{{ product.id }}">
+                                    <i class="fas fa-shopping-bag"></i>
+                                    <span>В корзину</span>
+                                </button>
+                                <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn-view" title="Подробнее">
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="catalog-empty">
+                    <div class="catalog-empty-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h2>Товары не найдены</h2>
+                    <p>Попробуйте изменить параметры фильтрации или выбрать другую категорию</p>
+                    <button class="clear-filters" style="width: auto; padding: 15px 30px;">
+                        <i class="fas fa-times"></i>
+                        <span>Сбросить все фильтры</span>
+                    </button>
+                </div>
+                {% endif %}
+
+                <!-- Pagination -->
+                {% if products.pages > 1 %}
+                <div class="catalog-pagination">
+                    {% if products.has_prev %}
+                    <a href="{{ url_for('catalog_page', page=products.prev_num, category=current_category) }}" class="page-btn">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    {% else %}
+                    <span class="page-btn disabled">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                    {% endif %}
+                    
+                    {% for page_num in products.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            {% if page_num == products.page %}
+                            <span class="page-btn active">{{ page_num }}</span>
+                            {% else %}
+                            <a href="{{ url_for('catalog_page', page=page_num, category=current_category) }}" class="page-btn">{{ page_num }}</a>
+                            {% endif %}
+                        {% else %}
+                            <span class="page-btn disabled">...</span>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if products.has_next %}
+                    <a href="{{ url_for('catalog_page', page=products.next_num, category=current_category) }}" class="page-btn">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% else %}
+                    <span class="page-btn disabled">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </main>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Price Range Slider
+        const rangeMin = document.getElementById('range-min');
+        const rangeMax = document.getElementById('range-max');
+        const minPrice = document.getElementById('min-price');
+        const maxPrice = document.getElementById('max-price');
+        const progress = document.querySelector('.price-slider .progress');
+        
+        function updatePriceSlider() {
+            const minVal = parseInt(rangeMin.value);
+            const maxVal = parseInt(rangeMax.value);
+            
+            if (maxVal - minVal < 100) {
+                if (rangeMin === document.activeElement) {
+                    rangeMin.value = maxVal - 100;
+                } else {
+                    rangeMax.value = minVal + 100;
+                }
+            }
+            
+            minPrice.value = minVal;
+            maxPrice.value = maxVal;
+            
+            const minPercent = (minVal / rangeMin.max) * 100;
+            const maxPercent = (maxVal / rangeMax.max) * 100;
+            progress.style.left = minPercent + '%';
+            progress.style.right = (100 - maxPercent) + '%';
+            
+            filterProducts();
+        }
+        
+        rangeMin.addEventListener('input', updatePriceSlider);
+        rangeMax.addEventListener('input', updatePriceSlider);
+        
+        minPrice.addEventListener('change', function() {
+            rangeMin.value = this.value;
+            updatePriceSlider();
+        });
+        
+        maxPrice.addEventListener('change', function() {
+            rangeMax.value = this.value;
+            updatePriceSlider();
+        });
+        
+        // Checkbox Filters
+        const filterItems = document.querySelectorAll('.filter-item');
+        filterItems.forEach(item => {
+            const checkbox = item.querySelector('.filter-checkbox');
+            item.addEventListener('click', function() {
+                checkbox.classList.toggle('checked');
+                filterProducts();
+            });
+        });
+        
+        // Color Filters
+        const colorItems = document.querySelectorAll('.color-item');
+        colorItems.forEach(item => {
+            item.addEventListener('click', function() {
+                colorItems.forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                filterProducts();
+            });
+        });
+        
+        // Size Filters
+        const sizeItems = document.querySelectorAll('.size-item');
+        sizeItems.forEach(item => {
+            item.addEventListener('click', function() {
+                if (this.classList.contains('active')) {
+                    this.classList.remove('active');
+                } else {
+                    sizeItems.forEach(s => s.classList.remove('active'));
+                    this.classList.add('active');
+                }
+                filterProducts();
+            });
+        });
+        
+        // View Toggle
+        const viewButtons = document.querySelectorAll('.view-btn');
+        const productsGrid = document.getElementById('products-grid');
+        
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const view = this.getAttribute('data-view');
+                
+                viewButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                productsGrid.classList.remove('grid-view', 'list-view', 'compact');
+                productsGrid.classList.add(view + '-view');
+                
+                // Save preference to localStorage
+                localStorage.setItem('catalog-view', view);
+            });
+        });
+        
+        // Restore view preference
+        const savedView = localStorage.getItem('catalog-view') || 'grid';
+        const savedViewButton = document.querySelector(`.view-btn[data-view="${savedView}"]`);
+        if (savedViewButton) {
+            savedViewButton.click();
+        }
+        
+        // Grid Size Slider
+        const gridSizeSlider = document.getElementById('grid-size');
+        if (gridSizeSlider) {
+            gridSizeSlider.addEventListener('input', function() {
+                const size = this.value;
+                let minWidth;
+                
+                switch(size) {
+                    case '1': minWidth = 350; break;
+                    case '2': minWidth = 280; break;
+                    case '3': minWidth = 240; break;
+                }
+                
+                productsGrid.style.gridTemplateColumns = `repeat(auto-fill, minmax(${minWidth}px, 1fr))`;
+                
+                // Save preference
+                localStorage.setItem('grid-size', size);
+            });
+            
+            // Restore grid size
+            const savedSize = localStorage.getItem('grid-size') || '2';
+            gridSizeSlider.value = savedSize;
+            gridSizeSlider.dispatchEvent(new Event('input'));
+        }
+        
+        // Sort Select
+        const sortSelect = document.getElementById('sort-select');
+        sortSelect.addEventListener('change', function() {
+            sortProducts();
+            localStorage.setItem('catalog-sort', this.value);
+        });
+        
+        // Restore sort preference
+        const savedSort = localStorage.getItem('catalog-sort');
+        if (savedSort) {
+            sortSelect.value = savedSort;
+        }
+        
+        // Clear Filters
+        const clearFiltersBtn = document.querySelector('.clear-filters');
+        clearFiltersBtn.addEventListener('click', function() {
+            // Reset price
+            rangeMin.value = 0;
+            rangeMax.value = 10000;
+            updatePriceSlider();
+            
+            // Reset checkboxes
+            filterItems.forEach(item => {
+                const checkbox = item.querySelector('.filter-checkbox');
+                checkbox.classList.remove('checked');
+            });
+            
+            // Reset colors (select first)
+            colorItems.forEach((item, index) => {
+                item.classList.remove('active');
+                if (index === 0) item.classList.add('active');
+            });
+            
+            // Reset sizes
+            sizeItems.forEach(item => item.classList.remove('active'));
+            
+            // Reset sort
+            sortSelect.value = 'newest';
+            
+            // Show all products
+            const allProducts = document.querySelectorAll('.product-card');
+            allProducts.forEach(product => {
+                product.style.display = 'block';
+            });
+        });
+        
+        // Filter Products Function
+        function filterProducts() {
+            const allProducts = document.querySelectorAll('.product-card');
+            const minPrice = parseInt(rangeMin.value);
+            const maxPrice = parseInt(rangeMax.value);
+            
+            // Get active filters
+            const activeBrands = Array.from(document.querySelectorAll('.filter-item[data-filter="brand"] .filter-checkbox.checked'))
+                .map(checkbox => checkbox.closest('.filter-item').getAttribute('data-value'));
+            
+            const activeSpecials = Array.from(document.querySelectorAll('.filter-item[data-filter="special"] .filter-checkbox.checked'))
+                .map(checkbox => checkbox.closest('.filter-item').getAttribute('data-value'));
+            
+            const activeColor = document.querySelector('.color-item.active')?.style.backgroundColor || '';
+            const activeSize = document.querySelector('.size-item.active')?.textContent.trim() || '';
+            
+            allProducts.forEach(product => {
+                const productPrice = parseInt(product.getAttribute('data-price'));
+                const productBrand = product.getAttribute('data-brand');
+                const productColor = product.getAttribute('data-color');
+                const productSize = product.getAttribute('data-size');
+                const isNew = product.getAttribute('data-new') === 'true';
+                const isSale = product.getAttribute('data-sale') === 'true';
+                const isExclusive = product.getAttribute('data-exclusive') === 'true';
+                
+                let shouldShow = true;
+                
+                // Price filter
+                if (productPrice < minPrice || productPrice > maxPrice) {
+                    shouldShow = false;
+                }
+                
+                // Brand filter
+                if (activeBrands.length > 0 && !activeBrands.includes(productBrand)) {
+                    shouldShow = false;
+                }
+                
+                // Color filter (simplified)
+                if (activeColor && productColor.toLowerCase() !== getColorName(activeColor)) {
+                    shouldShow = false;
+                }
+                
+                // Size filter
+                if (activeSize && productSize !== activeSize) {
+                    shouldShow = false;
+                }
+                
+                // Special filters
+                if (activeSpecials.length > 0) {
+                    let hasSpecial = false;
+                    if (activeSpecials.includes('new') && isNew) hasSpecial = true;
+                    if (activeSpecials.includes('sale') && isSale) hasSpecial = true;
+                    if (activeSpecials.includes('exclusive') && isExclusive) hasSpecial = true;
+                    if (activeSpecials.includes('limited') && isExclusive) hasSpecial = true;
+                    
+                    if (!hasSpecial) {
+                        shouldShow = false;
+                    }
+                }
+                
+                product.style.display = shouldShow ? 'block' : 'none';
+            });
+            
+            // Show empty state if no products
+            const visibleProducts = Array.from(allProducts).filter(p => p.style.display !== 'none');
+            const emptyState = document.querySelector('.catalog-empty');
+            
+            if (visibleProducts.length === 0) {
+                if (!emptyState) {
+                    // Create empty state if needed
+                    const gridContainer = document.querySelector('.catalog-products-grid');
+                    if (gridContainer) {
+                        gridContainer.innerHTML = `
+                            <div class="catalog-empty">
+                                <div class="catalog-empty-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <h2>Товары не найдены</h2>
+                                <p>Попробуйте изменить параметры фильтрации</p>
+                                <button class="clear-filters" style="width: auto; padding: 15px 30px;">
+                                    <i class="fas fa-times"></i>
+                                    <span>Сбросить все фильтры</span>
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            } else if (emptyState) {
+                emptyState.remove();
+            }
+        }
+        
+        // Sort Products Function
+        function sortProducts() {
+            const sortValue = sortSelect.value;
+            const grid = document.getElementById('products-grid');
+            const products = Array.from(grid.querySelectorAll('.product-card'));
+            
+            products.sort((a, b) => {
+                const aPrice = parseInt(a.getAttribute('data-price'));
+                const bPrice = parseInt(b.getAttribute('data-price'));
+                const aRating = 4.5; // Simulated rating
+                const bRating = 4.0;
+                const aDiscount = a.querySelector('.badge-sale') ? 
+                    parseInt(a.querySelector('.badge-sale').textContent.replace('-', '').replace('%', '')) : 0;
+                const bDiscount = b.querySelector('.badge-sale') ? 
+                    parseInt(b.querySelector('.badge-sale').textContent.replace('-', '').replace('%', '')) : 0;
+                
+                switch(sortValue) {
+                    case 'price-low':
+                        return aPrice - bPrice;
+                    case 'price-high':
+                        return bPrice - aPrice;
+                    case 'rating':
+                        return bRating - aRating;
+                    case 'discount':
+                        return bDiscount - aDiscount;
+                    case 'newest':
+                    default:
+                        return 0; // Keep original order for newest
+                }
+            });
+            
+            // Reorder products in grid
+            products.forEach(product => grid.appendChild(product));
+        }
+        
+        // Helper function to get color name from hex
+        function getColorName(hex) {
+            const colors = {
+                '#000000': 'черный',
+                '#ffffff': 'белый',
+                '#c41e3a': 'красный',
+                '#0f52ba': 'синий',
+                '#50c878': 'зеленый',
+                '#ffd700': 'золотой',
+                '#c0c0c0': 'серебряный',
+                '#800080': 'фиолетовый',
+                '#ff6b6b': 'розовый',
+                '#964b00': 'коричневый',
+                '#808080': 'серый',
+                '#ffa500': 'оранжевый'
+            };
+            
+            // Convert RGB to hex
+            if (hex.startsWith('rgb')) {
+                const rgb = hex.match(/\d+/g).map(Number);
+                hex = rgbToHex(rgb[0], rgb[1], rgb[2]);
+            }
+            
+            return colors[hex.toLowerCase()] || 'черный';
+        }
+        
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+        
+        // Add to cart functionality
+        const addToCartButtons = document.querySelectorAll('.btn-add-cart');
+        addToCartButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                
+                // Show notification
+                const notification = document.getElementById('notification');
+                const notificationMessage = document.getElementById('notification-message');
+                
+                notificationMessage.textContent = 'Товар добавлен в корзину';
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+                
+                // Update cart count
+                updateCartCount(1);
+                
+                // Button feedback
+                const icon = this.querySelector('i');
+                const originalIcon = icon.className;
+                const originalText = this.querySelector('span').textContent;
+                
+                icon.className = 'fas fa-check';
+                this.querySelector('span').textContent = 'Добавлено';
+                this.style.background = '#10b981';
+                this.style.color = 'white';
+                
+                setTimeout(() => {
+                    icon.className = originalIcon;
+                    this.querySelector('span').textContent = originalText;
+                    this.style.background = '';
+                    this.style.color = '';
+                }, 2000);
+                
+                // Send to server (AJAX)
+                fetch('/api/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        quantity: 1
+                    }),
+                    credentials: 'include'
+                }).catch(error => {
+                    console.error('Error adding to cart:', error);
+                });
+            });
+        });
+        
+        // Update cart count
+        function updateCartCount(increment = 0) {
+            const cartCountElement = document.getElementById('cart-count');
+            const mobileCartCountElement = document.getElementById('mobile-cart-count');
+            
+            if (cartCountElement) {
+                let currentCount = parseInt(cartCountElement.textContent) || 0;
+                currentCount += increment;
+                cartCountElement.textContent = currentCount;
+                
+                if (mobileCartCountElement) {
+                    mobileCartCountElement.textContent = currentCount;
+                }
+            }
+        }
+        
+        // Initialize filters
+        updatePriceSlider();
+    });
+</script>
+{% endblock %}
