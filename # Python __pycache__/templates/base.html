@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ shop_name }} | {{ shop_slogan }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="dark-theme">
+    <!-- Preloader -->
+    <div class="preloader">
+        <div class="preloader-spinner">
+            <div class="spinner"></div>
+            <div class="preloader-logo">
+                <i class="fas fa-crown"></i>
+                <span>{{ shop_name }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <div class="notification-content">
+            <span id="notification-message"></span>
+            <button class="notification-close"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="{{ url_for('index') }}" class="logo-link">
+                        <div class="logo-icon">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="logo-text">
+                            <h1 class="logo-name">{{ shop_name }}</h1>
+                            <p class="logo-tagline">{{ shop_slogan }}</p>
+                        </div>
+                    </a>
+                </div>
+                
+                <nav class="main-nav">
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="{{ url_for('index') }}" class="nav-link">
+                                <i class="fas fa-home nav-icon"></i>
+                                <span class="nav-text">Главная</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('catalog_page') }}" class="nav-link">
+                                <i class="fas fa-tshirt nav-icon"></i>
+                                <span class="nav-text">Каталог</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('cart_page') }}" class="nav-link cart-link">
+                                <i class="fas fa-shopping-bag nav-icon"></i>
+                                <span class="nav-text">Корзина</span>
+                                {% if current_user.is_authenticated %}
+                                <span class="cart-count" id="cart-count">0</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('orders') }}" class="nav-link">
+                                <i class="fas fa-history nav-icon"></i>
+                                <span class="nav-text">Заказы</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('profile') }}" class="nav-link">
+                                <i class="fas fa-user nav-icon"></i>
+                                <span class="nav-text">Профиль</span>
+                            </a>
+                        </li>
+                        {% if current_user.is_authenticated and current_user.is_admin %}
+                        <li class="nav-item">
+                            <a href="{{ url_for('admin_panel') }}" class="nav-link admin-link">
+                                <i class="fas fa-cog nav-icon"></i>
+                                <span class="nav-text">Админ</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                
+                <div class="header-actions">
+                    <div class="user-menu">
+                        {% if current_user.is_authenticated %}
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <div class="user-details">
+                                <span class="user-name">{{ current_user.first_name }}</span>
+                                <span class="user-status {% if current_user.is_vip %}vip{% endif %}">
+                                    {% if current_user.is_vip %}VIP{% else %}Стандарт{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="dropdown-menu">
+                            <a href="{{ url_for('profile') }}" class="dropdown-item">
+                                <i class="fas fa-user"></i> Профиль
+                            </a>
+                            <a href="{{ url_for('orders') }}" class="dropdown-item">
+                                <i class="fas fa-history"></i> Заказы
+                            </a>
+                            <a href="{{ url_for('logout') }}" class="dropdown-item logout">
+                                <i class="fas fa-sign-out-alt"></i> Выйти
+                            </a>
+                        </div>
+                        {% else %}
+                        <a href="/login" class="btn-login">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>Войти</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <button class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu">
+        <div class="mobile-menu-header">
+            <div class="mobile-logo">
+                <i class="fas fa-crown"></i>
+                <span>{{ shop_name }}</span>
+            </div>
+            <button class="mobile-menu-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="mobile-menu-content">
+            <div class="mobile-user-info">
+                {% if current_user.is_authenticated %}
+                <div class="mobile-user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="mobile-user-details">
+                    <span class="mobile-user-name">{{ current_user.first_name }}</span>
+                    <span class="mobile-user-status {% if current_user.is_vip %}vip{% endif %}">
+                        {% if current_user.is_vip %}VIP клиент{% else %}Стандарт{% endif %}
+                    </span>
+                </div>
+                {% else %}
+                <a href="/login" class="mobile-login-btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Войти в аккаунт</span>
+                </a>
+                {% endif %}
+            </div>
+            
+            <nav class="mobile-nav">
+                <a href="{{ url_for('index') }}" class="mobile-nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Главная</span>
+                </a>
+                <a href="{{ url_for('catalog_page') }}" class="mobile-nav-item">
+                    <i class="fas fa-tshirt"></i>
+                    <span>Каталог</span>
+                </a>
+                <a href="{{ url_for('cart_page') }}" class="mobile-nav-item">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Корзина</span>
+                    {% if current_user.is_authenticated %}
+                    <span class="mobile-cart-count" id="mobile-cart-count">0</span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('orders') }}" class="mobile-nav-item">
+                    <i class="fas fa-history"></i>
+                    <span>Заказы</span>
+                </a>
+                <a href="{{ url_for('profile') }}" class="mobile-nav-item">
+                    <i class="fas fa-user"></i>
+                    <span>Профиль</span>
+                </a>
+                {% if current_user.is_authenticated and current_user.is_admin %}
+                <a href="{{ url_for('admin_panel') }}" class="mobile-nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Админ панель</span>
+                </a>
+                {% endif %}
+            </nav>
+            
+            <div class="mobile-menu-footer">
+                <div class="mobile-contacts">
+                    <a href="tel:{{ shop_phone }}" class="mobile-contact-item">
+                        <i class="fas fa-phone"></i>
+                        <span>{{ shop_phone }}</span>
+                    </a>
+                    <a href="mailto:{{ shop_email }}" class="mobile-contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>{{ shop_email }}</span>
+                    </a>
+                    <a href="https://t.me/{{ support_username|replace('@', '') }}" class="mobile-contact-item" target="_blank">
+                        <i class="fab fa-telegram"></i>
+                        <span>{{ support_username }}</span>
+                    </a>
+                </div>
+                
+                <div class="mobile-social">
+                    <a href="#" class="mobile-social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="mobile-social-link"><i class="fab fa-vk"></i></a>
+                    <a href="#" class="mobile-social-link"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="container">
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                <div class="alert-icon">
+                                    {% if category == 'success' %}
+                                    <i class="fas fa-check-circle"></i>
+                                    {% elif category == 'error' %}
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {% elif category == 'warning' %}
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    {% elif category == 'info' %}
+                                    <i class="fas fa-info-circle"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="alert-message">{{ message }}</div>
+                                <button class="alert-close"><i class="fas fa-times"></i></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <i class="fas fa-crown"></i>
+                        <h3>{{ shop_name }}</h3>
+                    </div>
+                    <p class="footer-description">{{ shop_slogan }}<br>Эксклюзивная люксовая одежда от ведущих дизайнеров</p>
+                    <div class="footer-newsletter">
+                        <h4>Подпишитесь на новости</h4>
+                        <form class="newsletter-form">
+                            <input type="email" placeholder="Ваш email" class="newsletter-input">
+                            <button type="submit" class="newsletter-btn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Каталог</h4>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('catalog_page') }}?category=Платья">Платья</a></li>
+                        <li><a href="{{ url_for('catalog_page') }}?category=Костюмы">Костюмы</a></li>
+                        <li><a href="{{ url_for('catalog_page') }}?category=Блузы">Блузы</a></li>
+                        <li><a href="{{ url_for('catalog_page') }}?category=Брюки">Брюки</a></li>
+                        <li><a href="{{ url_for('catalog_page') }}?category=Юбки">Юбки</a></li>
+                        <li><a href="{{ url_for('catalog_page') }}?category=Куртки">Куртки</a></li>
+                        <li><a href="{{ url_for('catalog_page') }}?category=Пальто">Пальто</a></li>
+                        <li><a href="{{ url_for('catalog_page') }}?category=Обувь">Обувь</a></li>
+                        <li><a href="{{ url_for('catalog_page') }}?category=Сумки">Сумки</a></li>
+                        <li><a href="{{ url_for('catalog_page') }}?category=Украшения">Украшения</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Помощь</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Доставка и оплата</a></li>
+                        <li><a href="#">Возврат и обмен</a></li>
+                        <li><a href="#">Таблица размеров</a></li>
+                        <li><a href="#">Уход за одеждой</a></li>
+                        <li><a href="#">Частые вопросы</a></li>
+                        <li><a href="#">Публичная оферта</a></li>
+                        <li><a href="#">Политика конфиденциальности</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Контакты</h4>
+                    <div class="footer-contacts">
+                        <div class="contact-item">
+                            <i class="fas fa-phone contact-icon"></i>
+                            <div class="contact-info">
+                                <span class="contact-label">Телефон</span>
+                                <a href="tel:{{ shop_phone }}" class="contact-value">{{ shop_phone }}</a>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-envelope contact-icon"></i>
+                            <div class="contact-info">
+                                <span class="contact-label">Email</span>
+                                <a href="mailto:{{ shop_email }}" class="contact-value">{{ shop_email }}</a>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fab fa-telegram contact-icon"></i>
+                            <div class="contact-info">
+                                <span class="contact-label">Telegram</span>
+                                <a href="https://t.me/{{ support_username|replace('@', '') }}" target="_blank" class="contact-value">{{ support_username }}</a>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-clock contact-icon"></i>
+                            <div class="contact-info">
+                                <span class="contact-label">Часы работы</span>
+                                <span class="contact-value">Пн-Вс: 10:00-22:00</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="footer-social">
+                        <h4>Мы в соцсетях</h4>
+                        <div class="social-links">
+                            <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                            <a href="#" class="social-link"><i class="fab fa-vk"></i></a>
+                            <a href="#" class="social-link"><i class="fab fa-telegram"></i></a>
+                            <a href="#" class="social-link"><i class="fab fa-whatsapp"></i></a>
+                            <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="footer-bottom-content">
+                    <div class="copyright">
+                        <p>&copy; 2024 {{ shop_name }}. Все права защищены.</p>
+                        <p>Люксовый бренд одежды класса люкс</p>
+                    </div>
+                    
+                    <div class="payment-methods">
+                        <span class="payment-label">Принимаем к оплате:</span>
+                        <div class="payment-icons">
+                            <i class="fab fa-cc-visa payment-icon"></i>
+                            <i class="fab fa-cc-mastercard payment-icon"></i>
+                            <i class="fab fa-cc-amex payment-icon"></i>
+                            <i class="fab fa-cc-paypal payment-icon"></i>
+                            <i class="fas fa-credit-card payment-icon"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="footer-apps">
+                        <a href="#" class="app-store-btn">
+                            <i class="fab fa-apple"></i>
+                            <span>App Store</span>
+                        </a>
+                        <a href="#" class="google-play-btn">
+                            <i class="fab fa-google-play"></i>
+                            <span>Google Play</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top -->
+    <button class="back-to-top">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/catalog.js') }}"></script>
+    
+    <script>
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            // Preloader
+            setTimeout(() => {
+                document.querySelector('.preloader').classList.add('loaded');
+            }, 1000);
+            
+            // Mobile menu
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const mobileClose = document.querySelector('.mobile-menu-close');
+            const mobileMenu = document.querySelector('.mobile-menu');
+            
+            mobileToggle?.addEventListener('click', () => {
+                mobileMenu.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+            
+            mobileClose?.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+            
+            // Close alerts
+            document.querySelectorAll('.alert-close').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.closest('.alert').remove();
+                });
+            });
+            
+            // Back to top
+            const backToTop = document.querySelector('.back-to-top');
+            window.addEventListener('scroll', () => {
+                if (window.pageYOffset > 300) {
+                    backToTop.classList.add('visible');
+                } else {
+                    backToTop.classList.remove('visible');
+                }
+            });
+            
+            backToTop.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            
+            // User menu dropdown
+            const userMenu = document.querySelector('.user-menu');
+            if (userMenu) {
+                userMenu.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    userMenu.classList.toggle('active');
+                });
+                
+                document.addEventListener('click', () => {
+                    userMenu.classList.remove('active');
+                });
+            }
+            
+            // Notification
+            const notification = document.getElementById('notification');
+            const notificationClose = document.querySelector('.notification-close');
+            
+            notificationClose?.addEventListener('click', () => {
+                notification.classList.remove('show');
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
