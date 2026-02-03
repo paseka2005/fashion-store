@@ -1,0 +1,1466 @@
+{% extends "base.html" %}
+
+{% block title %}Оформление заказа | {{ shop_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Checkout Page */
+    .checkout-page {
+        padding: 40px 0 80px;
+    }
+    
+    .checkout-header {
+        margin-bottom: 40px;
+    }
+    
+    .checkout-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: var(--text-primary);
+    }
+    
+    .checkout-steps {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 30px;
+        position: relative;
+    }
+    
+    .checkout-steps::before {
+        content: '';
+        position: absolute;
+        top: 15px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-color);
+        z-index: 1;
+    }
+    
+    .checkout-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .step-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-full);
+        background: var(--surface-bg);
+        border: 2px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: var(--text-tertiary);
+        margin-bottom: 10px;
+        transition: all var(--transition-fast);
+    }
+    
+    .checkout-step.active .step-circle {
+        background: var(--gold);
+        border-color: var(--gold);
+        color: var(--text-inverse);
+        transform: scale(1.1);
+    }
+    
+    .checkout-step.completed .step-circle {
+        background: #10b981;
+        border-color: #10b981;
+        color: var(--text-inverse);
+    }
+    
+    .step-label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .checkout-step.active .step-label {
+        color: var(--gold);
+        font-weight: 600;
+    }
+    
+    /* Checkout Layout */
+    .checkout-layout {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 40px;
+    }
+    
+    @media (max-width: 992px) {
+        .checkout-layout {
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+    }
+    
+    /* Checkout Forms */
+    .checkout-section {
+        background: var(--card-bg);
+        border-radius: var(--radius-xl);
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: var(--shadow-md);
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .section-title i {
+        color: var(--gold);
+    }
+    
+    .section-subtitle {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+    
+    /* Form Groups */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    @media (max-width: 576px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group.full-width {
+        grid-column: span 2;
+    }
+    
+    @media (max-width: 576px) {
+        .form-group.full-width {
+            grid-column: span 1;
+        }
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+    
+    .form-label .required {
+        color: #ef4444;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 14px 16px;
+        background: var(--surface-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all var(--transition-fast);
+    }
+    
+    .form-input:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+    }
+    
+    .form-input::placeholder {
+        color: var(--text-tertiary);
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 14px 40px 14px 16px;
+        background: var(--surface-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 1rem;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23d4af37' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        background-size: 16px;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .form-select:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+    }
+    
+    /* Radio and Checkbox Styles */
+    .radio-group {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+    }
+    
+    .radio-input {
+        display: none;
+    }
+    
+    .radio-custom {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-full);
+        position: relative;
+        transition: all var(--transition-fast);
+    }
+    
+    .radio-input:checked + .radio-custom {
+        border-color: var(--gold);
+    }
+    
+    .radio-input:checked + .radio-custom::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 10px;
+        height: 10px;
+        background: var(--gold);
+        border-radius: var(--radius-full);
+    }
+    
+    .radio-label {
+        flex: 1;
+        color: var(--text-primary);
+    }
+    
+    .radio-description {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        cursor: pointer;
+    }
+    
+    .checkbox-input {
+        display: none;
+    }
+    
+    .checkbox-custom {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        margin-top: 3px;
+        position: relative;
+        transition: all var(--transition-fast);
+    }
+    
+    .checkbox-input:checked + .checkbox-custom {
+        background: var(--gold);
+        border-color: var(--gold);
+    }
+    
+    .checkbox-input:checked + .checkbox-custom::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .checkbox-label {
+        flex: 1;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    
+    /* Delivery Methods */
+    .delivery-methods {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .delivery-method {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 15px;
+        padding: 20px;
+        background: var(--surface-bg);
+        border-radius: var(--radius-lg);
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .delivery-method:hover {
+        border-color: var(--border-color);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .delivery-method.selected {
+        border-color: var(--gold);
+        background: rgba(212, 175, 55, 0.05);
+    }
+    
+    .delivery-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--gold);
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: var(--text-inverse);
+    }
+    
+    .delivery-info {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .delivery-name {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .delivery-description {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+    
+    .delivery-price {
+        font-weight: 700;
+        color: var(--gold);
+        font-size: 1.2rem;
+        white-space: nowrap;
+    }
+    
+    /* Payment Methods */
+    .payment-methods {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+    }
+    
+    .payment-method {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 20px 15px;
+        background: var(--surface-bg);
+        border-radius: var(--radius-lg);
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .payment-method:hover {
+        border-color: var(--border-color);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .payment-method.selected {
+        border-color: var(--gold);
+        background: rgba(212, 175, 55, 0.05);
+    }
+    
+    .payment-icon {
+        font-size: 2rem;
+        color: var(--gold);
+    }
+    
+    .payment-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        text-align: center;
+        font-size: 0.9rem;
+    }
+    
+    /* Order Summary */
+    .order-summary {
+        position: sticky;
+        top: calc(var(--header-height) + 20px);
+        background: var(--card-bg);
+        border-radius: var(--radius-xl);
+        padding: 30px;
+        box-shadow: var(--shadow-md);
+    }
+    
+    .summary-items {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-bottom: 25px;
+        padding-right: 10px;
+    }
+    
+    .summary-item {
+        display: flex;
+        gap: 15px;
+        padding: 15px 0;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .summary-item:last-child {
+        border-bottom: none;
+    }
+    
+    .summary-item-image {
+        width: 60px;
+        height: 75px;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        background: var(--surface-bg);
+        flex-shrink: 0;
+    }
+    
+    .summary-item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .summary-item-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .summary-item-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+    
+    .summary-item-details {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+    
+    .summary-item-quantity {
+        font-size: 0.9rem;
+        color: var(--text-tertiary);
+    }
+    
+    .summary-item-price {
+        font-weight: 700;
+        color: var(--gold);
+        font-size: 1.1rem;
+        white-space: nowrap;
+    }
+    
+    /* Summary Totals */
+    .summary-totals {
+        border-top: 1px solid var(--border-color);
+        padding-top: 20px;
+        margin-top: 20px;
+    }
+    
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+    }
+    
+    .total-label {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+    }
+    
+    .total-value {
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+    
+    .total-row.grand-total {
+        border-top: 1px solid var(--border-color);
+        margin-top: 10px;
+        padding-top: 15px;
+    }
+    
+    .total-row.grand-total .total-label {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .total-row.grand-total .total-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--gold);
+    }
+    
+    /* Gift Message */
+    .gift-message {
+        margin-top: 25px;
+    }
+    
+    .gift-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+        cursor: pointer;
+    }
+    
+    .gift-toggle input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .gift-toggle-label {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .gift-message-box {
+        height: 0;
+        overflow: hidden;
+        transition: all var(--transition-normal);
+    }
+    
+    .gift-message-box.show {
+        height: auto;
+        margin-top: 15px;
+    }
+    
+    .gift-textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 15px;
+        background: var(--surface-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 1rem;
+        resize: vertical;
+        transition: all var(--transition-fast);
+    }
+    
+    .gift-textarea:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+    }
+    
+    /* Terms and Conditions */
+    .terms-section {
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .terms-content {
+        max-height: 200px;
+        overflow-y: auto;
+        background: var(--surface-bg);
+        border-radius: var(--radius-md);
+        padding: 20px;
+        margin-bottom: 20px;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+    
+    /* Place Order Button */
+    .place-order-section {
+        margin-top: 30px;
+    }
+    
+    .btn-place-order {
+        width: 100%;
+        padding: 20px;
+        background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+        color: var(--text-inverse);
+        border-radius: var(--radius-lg);
+        font-size: 1.2rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        transition: all var(--transition-normal);
+        box-shadow: var(--shadow-gold);
+    }
+    
+    .btn-place-order:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(212, 175, 55, 0.4);
+    }
+    
+    .btn-place-order:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    /* Security Info */
+    .security-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+    
+    .security-info i {
+        color: #10b981;
+        font-size: 1.2rem;
+    }
+    
+    /* Back to Cart */
+    .back-to-cart {
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    .back-to-cart-link {
+        color: var(--gold);
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all var(--transition-fast);
+    }
+    
+    .back-to-cart-link:hover {
+        gap: 12px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .checkout-title {
+            font-size: 2rem;
+        }
+        
+        .checkout-steps {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
+        .checkout-steps::before {
+            display: none;
+        }
+        
+        .checkout-step {
+            flex-direction: row;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .step-circle {
+            margin-bottom: 0;
+        }
+        
+        .delivery-method {
+            grid-template-columns: 1fr;
+        }
+        
+        .delivery-price {
+            text-align: right;
+        }
+        
+        .checkout-section {
+            padding: 20px;
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .checkout-title {
+            font-size: 1.75rem;
+        }
+        
+        .order-summary {
+            padding: 20px;
+        }
+        
+        .payment-methods {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Checkout Page -->
+    <div class="checkout-page">
+        <div class="container">
+            <!-- Header -->
+            <div class="checkout-header">
+                <h1 class="checkout-title">Оформление заказа</h1>
+                
+                <!-- Progress Steps -->
+                <div class="checkout-steps">
+                    <div class="checkout-step active">
+                        <div class="step-circle">1</div>
+                        <div class="step-label">Данные доставки</div>
+                    </div>
+                    <div class="checkout-step">
+                        <div class="step-circle">2</div>
+                        <div class="step-label">Способ оплаты</div>
+                    </div>
+                    <div class="checkout-step">
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Подтверждение</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="checkout-layout">
+                <!-- Left Column: Forms -->
+                <div class="checkout-forms">
+                    <!-- Contact Information -->
+                    <section class="checkout-section" id="contact-section">
+                        <div class="section-header">
+                            <h2 class="section-title">
+                                <i class="fas fa-user"></i>
+                                <span>Контактная информация</span>
+                            </h2>
+                        </div>
+                        
+                        <form id="contact-form">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        Имя <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-input" 
+                                           id="first-name" 
+                                           required
+                                           value="{{ current_user.first_name if current_user.is_authenticated else '' }}">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        Фамилия <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-input" 
+                                           id="last-name" 
+                                           required
+                                           value="{{ current_user.last_name if current_user.is_authenticated else '' }}">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">
+                                        Email <span class="required">*</span>
+                                    </label>
+                                    <input type="email" 
+                                           class="form-input" 
+                                           id="email" 
+                                           required
+                                           value="{{ current_user.email if current_user.is_authenticated else '' }}">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">
+                                        Телефон <span class="required">*</span>
+                                    </label>
+                                    <input type="tel" 
+                                           class="form-input" 
+                                           id="phone" 
+                                           required
+                                           placeholder="+7 (999) 999-99-99">
+                                </div>
+                            </div>
+                        </form>
+                    </section>
+                    
+                    <!-- Shipping Address -->
+                    <section class="checkout-section" id="shipping-section">
+                        <div class="section-header">
+                            <h2 class="section-title">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>Адрес доставки</span>
+                            </h2>
+                            <div class="section-subtitle">
+                                <label class="checkbox-group">
+                                    <input type="checkbox" id="same-as-billing">
+                                    <span class="checkbox-custom"></span>
+                                    <span class="checkbox-label">Совпадает с адресом оплаты</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <form id="shipping-form">
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label class="form-label">
+                                        Страна <span class="required">*</span>
+                                    </label>
+                                    <select class="form-select" id="country" required>
+                                        <option value="">Выберите страну</option>
+                                        <option value="RU" selected>Россия</option>
+                                        <option value="KZ">Казахстан</option>
+                                        <option value="BY">Беларусь</option>
+                                        <option value="UA">Украина</option>
+                                        <option value="US">США</option>
+                                        <option value="DE">Германия</option>
+                                        <option value="FR">Франция</option>
+                                        <option value="IT">Италия</option>
+                                        <option value="GB">Великобритания</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">
+                                        Адрес <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-input" 
+                                           id="address" 
+                                           required
+                                           placeholder="Улица, дом, квартира">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        Город <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-input" 
+                                           id="city" 
+                                           required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        Область/Регион <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-input" 
+                                           id="region" 
+                                           required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        Почтовый индекс <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-input" 
+                                           id="postal-code" 
+                                           required>
+                                </div>
+                            </div>
+                        </form>
+                    </section>
+                    
+                    <!-- Delivery Method -->
+                    <section class="checkout-section" id="delivery-section">
+                        <div class="section-header">
+                            <h2 class="section-title">
+                                <i class="fas fa-shipping-fast"></i>
+                                <span>Способ доставки</span>
+                            </h2>
+                        </div>
+                        
+                        <div class="delivery-methods">
+                            <div class="delivery-method selected" data-method="express">
+                                <div class="delivery-icon">
+                                    <i class="fas fa-rocket"></i>
+                                </div>
+                                <div class="delivery-info">
+                                    <div class="delivery-name">VIP Экспресс доставка</div>
+                                    <div class="delivery-description">Доставка 1-2 рабочих дня. Курьер звонит за 30 минут</div>
+                                </div>
+                                <div class="delivery-price">Бесплатно</div>
+                            </div>
+                            
+                            <div class="delivery-method" data-method="standard">
+                                <div class="delivery-icon">
+                                    <i class="fas fa-truck"></i>
+                                </div>
+                                <div class="delivery-info">
+                                    <div class="delivery-name">Стандартная доставка</div>
+                                    <div class="delivery-description">Доставка 3-5 рабочих дней</div>
+                                </div>
+                                <div class="delivery-price">30 €</div>
+                            </div>
+                            
+                            <div class="delivery-method" data-method="pickup">
+                                <div class="delivery-icon">
+                                    <i class="fas fa-store"></i>
+                                </div>
+                                <div class="delivery-info">
+                                    <div class="delivery-name">Самовывоз</div>
+                                    <div class="delivery-description">Из нашего бутика в Москве</div>
+                                </div>
+                                <div class="delivery-price">Бесплатно</div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <!-- Payment Method -->
+                    <section class="checkout-section" id="payment-section">
+                        <div class="section-header">
+                            <h2 class="section-title">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Способ оплаты</span>
+                            </h2>
+                        </div>
+                        
+                        <div class="payment-methods">
+                            <div class="payment-method selected" data-method="card">
+                                <i class="fas fa-credit-card payment-icon"></i>
+                                <div class="payment-name">Банковская карта</div>
+                            </div>
+                            
+                            <div class="payment-method" data-method="apple-pay">
+                                <i class="fab fa-apple payment-icon"></i>
+                                <div class="payment-name">Apple Pay</div>
+                            </div>
+                            
+                            <div class="payment-method" data-method="google-pay">
+                                <i class="fab fa-google payment-icon"></i>
+                                <div class="payment-name">Google Pay</div>
+                            </div>
+                            
+                            <div class="payment-method" data-method="paypal">
+                                <i class="fab fa-paypal payment-icon"></i>
+                                <div class="payment-name">PayPal</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Card Details (shown when card is selected) -->
+                        <div class="card-details" id="card-details">
+                            <div class="form-grid" style="margin-top: 25px;">
+                                <div class="form-group full-width">
+                                    <label class="form-label">
+                                        Номер карты <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-input" 
+                                           id="card-number"
+                                           placeholder="1234 5678 9012 3456"
+                                           maxlength="19">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        Срок действия <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-input" 
+                                           id="card-expiry"
+                                           placeholder="ММ/ГГ"
+                                           maxlength="5">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        CVV <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-input" 
+                                           id="card-cvv"
+                                           placeholder="123"
+                                           maxlength="3">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">
+                                        Имя на карте <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-input" 
+                                           id="card-name"
+                                           placeholder="IVAN IVANOV">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <!-- Order Notes -->
+                    <section class="checkout-section" id="notes-section">
+                        <div class="section-header">
+                            <h2 class="section-title">
+                                <i class="fas fa-sticky-note"></i>
+                                <span>Примечания к заказу</span>
+                            </h2>
+                        </div>
+                        
+                        <div class="form-group">
+                            <textarea class="form-input" 
+                                      id="order-notes" 
+                                      placeholder="Укажите дополнительные пожелания, например, время доставки или инструкции для курьера..."
+                                      rows="4"></textarea>
+                        </div>
+                        
+                        <!-- Gift Option -->
+                        <div class="gift-message">
+                            <div class="gift-toggle">
+                                <input type="checkbox" id="gift-toggle">
+                                <label for="gift-toggle" class="gift-toggle-label">
+                                    Это подарочный заказ
+                                </label>
+                            </div>
+                            
+                            <div class="gift-message-box" id="gift-message-box">
+                                <label class="form-label">Подарочное сообщение</label>
+                                <textarea class="gift-textarea" 
+                                          id="gift-message"
+                                          placeholder="Напишите ваше пожелание..."></textarea>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                
+                <!-- Right Column: Order Summary -->
+                <div class="checkout-summary">
+                    <div class="order-summary">
+                        <h2 class="section-title">Ваш заказ</h2>
+                        
+                        <!-- Order Items -->
+                        <div class="summary-items">
+                            {% for item in cart_items %}
+                            <div class="summary-item">
+                                <div class="summary-item-image">
+                                    {% if item.product.image_url %}
+                                    <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}" loading="lazy">
+                                    {% else %}
+                                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-image" style="font-size: 18px; color: var(--border-color);"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="summary-item-info">
+                                    <div class="summary-item-name">{{ item.product.name|truncate(30) }}</div>
+                                    {% if item.selected_size or item.selected_color %}
+                                    <div class="summary-item-details">
+                                        {% if item.selected_size %}Размер: {{ item.selected_size }}{% endif %}
+                                        {% if item.selected_color %}, Цвет: {{ item.selected_color }}{% endif %}
+                                    </div>
+                                    {% endif %}
+                                    <div class="summary-item-quantity">Количество: {{ item.quantity }}</div>
+                                </div>
+                                
+                                <div class="summary-item-price">
+                                    {{ item.product.price * item.quantity }} €
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Order Totals -->
+                        <div class="summary-totals">
+                            <div class="total-row">
+                                <span class="total-label">Промежуточный итог</span>
+                                <span class="total-value" id="summary-subtotal">{{ total }} €</span>
+                            </div>
+                            
+                            <div class="total-row">
+                                <span class="total-label">Доставка</span>
+                                <span class="total-value" id="summary-shipping">
+                                    {% if delivery_cost == 0 %}
+                                    Бесплатно
+                                    {% else %}
+                                    {{ delivery_cost }} €
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="total-row">
+                                <span class="total-label">Налог</span>
+                                <span class="total-value">Включен</span>
+                            </div>
+                            
+                            <div class="total-row grand-total">
+                                <span class="total-label">Итого</span>
+                                <span class="total-value" id="summary-total">{{ final_amount }} €</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Terms and Conditions -->
+                        <div class="terms-section">
+                            <div class="terms-content">
+                                <p><strong>Условия использования:</strong></p>
+                                <p>1. Все товары проходят строгий контроль качества перед отправкой.</p>
+                                <p>2. Возврат возможен в течение 30 дней при сохранении товарного вида.</p>
+                                <p>3. Гарантия на изделия составляет 2 года с момента покупки.</p>
+                                <p>4. VIP доставка осуществляется в течение 1-2 рабочих дней.</p>
+                                <p>5. Для самовывоза необходимо предварительное уведомление за 2 часа.</p>
+                                <p>6. Мы используем безопасное SSL-шифрование для всех платежей.</p>
+                                <p>7. Ваши данные защищены в соответствии с политикой конфиденциальности.</p>
+                            </div>
+                            
+                            <label class="checkbox-group">
+                                <input type="checkbox" id="agree-terms" required>
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">
+                                    Я прочитал и согласен с 
+                                    <a href="#" style="color: var(--gold);">условиями использования</a> 
+                                    и 
+                                    <a href="#" style="color: var(--gold);">политикой конфиденциальности</a>
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <!-- Place Order Button -->
+                        <div class="place-order-section">
+                            <button class="btn-place-order" id="place-order-btn" disabled>
+                                <i class="fas fa-lock"></i>
+                                <span>Разместить заказ</span>
+                            </button>
+                            
+                            <div class="security-info">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Ваши данные защищены SSL-шифрованием</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Back to Cart -->
+                        <div class="back-to-cart">
+                            <a href="{{ url_for('cart_page') }}" class="back-to-cart-link">
+                                <i class="fas fa-arrow-left"></i>
+                                <span>Вернуться в корзину</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Checkout Steps
+        const steps = document.querySelectorAll('.checkout-step');
+        let currentStep = 0;
+        
+        // Delivery Methods
+        const deliveryMethods = document.querySelectorAll('.delivery-method');
+        let selectedDeliveryMethod = 'express';
+        
+        deliveryMethods.forEach(method => {
+            method.addEventListener('click', function() {
+                // Remove selected from all
+                deliveryMethods.forEach(m => m.classList.remove('selected'));
+                // Add selected to clicked
+                this.classList.add('selected');
+                selectedDeliveryMethod = this.getAttribute('data-method');
+                
+                // Update shipping cost in summary
+                updateShippingCost();
+            });
+        });
+        
+        // Payment Methods
+        const paymentMethods = document.querySelectorAll('.payment-method');
+        const cardDetails = document.getElementById('card-details');
+        let selectedPaymentMethod = 'card';
+        
+        paymentMethods.forEach(method => {
+            method.addEventListener('click', function() {
+                // Remove selected from all
+                paymentMethods.forEach(m => m.classList.remove('selected'));
+                // Add selected to clicked
+                this.classList.add('selected');
+                selectedPaymentMethod = this.getAttribute('data-method');
+                
+                // Show/hide card details
+                if (selectedPaymentMethod === 'card') {
+                    cardDetails.style.display = 'block';
+                } else {
+                    cardDetails.style.display = 'none';
+                }
+            });
+        });
+        
+        // Gift Toggle
+        const giftToggle = document.getElementById('gift-toggle');
+        const giftMessageBox = document.getElementById('gift-message-box');
+        
+        giftToggle.addEventListener('change', function() {
+            if (this.checked) {
+                giftMessageBox.classList.add('show');
+            } else {
+                giftMessageBox.classList.remove('show');
+            }
+        });
+        
+        // Form Validation
+        const forms = ['contact-form', 'shipping-form'];
+        const requiredFields = [
+            '#first-name', '#last-name', '#email', '#phone',
+            '#country', '#address', '#city', '#region', '#postal-code'
+        ];
+        
+        function validateForms() {
+            let isValid = true;
+            
+            // Check required fields
+            requiredFields.forEach(field => {
+                const element = document.querySelector(field);
+                if (element && element.value.trim() === '') {
+                    isValid = false;
+                    element.style.borderColor = '#ef4444';
+                } else if (element) {
+                    element.style.borderColor = '';
+                }
+            });
+            
+            // Check terms agreement
+            const agreeTerms = document.getElementById('agree-terms');
+            if (!agreeTerms.checked) {
+                isValid = false;
+                agreeTerms.parentElement.style.color = '#ef4444';
+            } else {
+                agreeTerms.parentElement.style.color = '';
+            }
+            
+            // Validate card details if card payment selected
+            if (selectedPaymentMethod === 'card') {
+                const cardFields = ['#card-number', '#card-expiry', '#card-cvv', '#card-name'];
+                cardFields.forEach(field => {
+                    const element = document.querySelector(field);
+                    if (element && element.value.trim() === '') {
+                        isValid = false;
+                        element.style.borderColor = '#ef4444';
+                    } else if (element) {
+                        element.style.borderColor = '';
+                    }
+                });
+            }
+            
+            return isValid;
+        }
+        
+        // Update shipping cost
+        function updateShippingCost() {
+            const shippingElement = document.getElementById('summary-shipping');
+            let shippingCost = 0;
+            
+            switch(selectedDeliveryMethod) {
+                case 'express':
+                    shippingCost = 0;
+                    shippingElement.textContent = 'Бесплатно';
+                    break;
+                case 'standard':
+                    shippingCost = 30;
+                    shippingElement.textContent = '30 €';
+                    break;
+                case 'pickup':
+                    shippingCost = 0;
+                    shippingElement.textContent = 'Бесплатно';
+                    break;
+            }
+            
+            // Update total
+            updateTotal(shippingCost);
+        }
+        
+        // Update total amount
+        function updateTotal(shippingCost) {
+            const subtotal = parseFloat('{{ total }}');
+            const totalAmount = subtotal + shippingCost;
+            document.getElementById('summary-total').textContent = totalAmount.toFixed(2) + ' €';
+        }
+        
+        // Card input formatting
+        const cardNumberInput = document.getElementById('card-number');
+        const cardExpiryInput = document.getElementById('card-expiry');
+        
+        if (cardNumberInput) {
+            cardNumberInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+                let formatted = value.replace(/(\d{4})/g, '$1 ').trim();
+                e.target.value = formatted.substring(0, 19);
+            });
+        }
+        
+        if (cardExpiryInput) {
+            cardExpiryInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length >= 2) {
+                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                }
+                e.target.value = value.substring(0, 5);
+            });
+        }
+        
+        // Same as billing checkbox
+        const sameAsBillingCheckbox = document.getElementById('same-as-billing');
+        if (sameAsBillingCheckbox) {
+            sameAsBillingCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    // Copy billing info to shipping (simplified)
+                    const firstName = document.getElementById('first-name').value;
+                    const lastName = document.getElementById('last-name').value;
+                    
+                    // In real app, you would copy all relevant fields
+                    console.log('Copying billing info to shipping...');
+                }
+            });
+        }
+        
+        // Enable/disable place order button based on validation
+        function updatePlaceOrderButton() {
+            const placeOrderBtn = document.getElementById('place-order-btn');
+            placeOrderBtn.disabled = !validateForms();
+        }
+        
+        // Listen to form changes
+        document.querySelectorAll('input, select, textarea').forEach(element => {
+            element.addEventListener('change', updatePlaceOrderButton);
+            element.addEventListener('input', updatePlaceOrderButton);
+        });
+        
+        // Terms checkbox
+        const termsCheckbox = document.getElementById('agree-terms');
+        if (termsCheckbox) {
+            termsCheckbox.addEventListener('change', updatePlaceOrderButton);
+        }
+        
+        // Place Order
+        const placeOrderBtn = document.getElementById('place-order-btn');
+        placeOrderBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            if (!validateForms()) {
+                alert('Пожалуйста, заполните все обязательные поля и примите условия использования.');
+                return;
+            }
+            
+            // Show loading state
+            const originalHtml = this.innerHTML;
+            this.innerHTML = `
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Обработка заказа...</span>
+            `;
+            this.disabled = true;
+            
+            // Collect order data
+            const orderData = {
+                contact: {
+                    firstName: document.getElementById('first-name').value,
+                    lastName: document.getElementById('last-name').value,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value
+                },
+                shipping: {
+                    country: document.getElementById('country').value,
+                    address: document.getElementById('address').value,
+                    city: document.getElementById('city').value,
+                    region: document.getElementById('region').value,
+                    postalCode: document.getElementById('postal-code').value
+                },
+                delivery: selectedDeliveryMethod,
+                payment: selectedPaymentMethod,
+                notes: document.getElementById('order-notes').value,
+                giftMessage: giftToggle.checked ? document.getElementById('gift-message').value : null,
+                total: parseFloat('{{ final_amount }}')
+            };
+            
+            // Add card details if applicable
+            if (selectedPaymentMethod === 'card') {
+                orderData.card = {
+                    number: document.getElementById('card-number').value.replace(/\s+/g, ''),
+                    expiry: document.getElementById('card-expiry').value,
+                    cvv: document.getElementById('card-cvv').value,
+                    name: document.getElementById('card-name').value
+                };
+            }
+            
+            // Submit order
+            fetch('/api/orders/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderData),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Redirect to success page
+                    window.location.href = '/order/success/' + data.order_id;
+                } else {
+                    throw new Error(data.message || 'Ошибка при оформлении заказа');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                // Show error message
+                const notification = document.getElementById('notification');
+                const notificationMessage = document.getElementById('notification-message');
+                
+                notificationMessage.textContent = 'Ошибка при оформлении заказа: ' + error.message;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 5000);
+                
+                // Reset button
+                this.innerHTML = originalHtml;
+                this.disabled = false;
+            });
+        });
+        
+        // Initialize
+        updateShippingCost();
+        updatePlaceOrderButton();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,2408 @@
+{% extends "base.html" %}
+
+{% block title %}Административная панель | {{ shop_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Admin Layout */
+    .admin-page {
+        display: flex;
+        min-height: 100vh;
+        background: var(--primary-bg);
+    }
+    
+    /* Admin Sidebar */
+    .admin-sidebar {
+        width: 280px;
+        background: var(--secondary-bg);
+        border-right: 1px solid var(--border-color);
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1000;
+        overflow-y: auto;
+        transition: all var(--transition-normal);
+    }
+    
+    .admin-sidebar.collapsed {
+        width: 80px;
+    }
+    
+    .sidebar-header {
+        padding: 30px 25px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .admin-logo {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .admin-logo-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--gold) 0%, var(--rose-gold) 100%);
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: var(--text-inverse);
+        font-weight: 700;
+    }
+    
+    .admin-logo-text {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    
+    .admin-sidebar.collapsed .admin-logo-text {
+        display: none;
+    }
+    
+    .sidebar-toggle {
+        width: 36px;
+        height: 36px;
+        background: var(--surface-bg);
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .sidebar-toggle:hover {
+        background: var(--tertiary-bg);
+        color: var(--text-primary);
+        transform: rotate(180deg);
+    }
+    
+    /* Sidebar Menu */
+    .sidebar-menu {
+        padding: 25px 0;
+    }
+    
+    .menu-section {
+        margin-bottom: 30px;
+    }
+    
+    .section-title {
+        padding: 0 25px 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    
+    .admin-sidebar.collapsed .section-title {
+        display: none;
+    }
+    
+    .menu-items {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .menu-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 14px 25px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all var(--transition-fast);
+        position: relative;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    
+    .menu-item:hover {
+        background: rgba(212, 175, 55, 0.05);
+        color: var(--text-primary);
+        padding-left: 30px;
+    }
+    
+    .menu-item.active {
+        background: linear-gradient(90deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0) 100%);
+        color: var(--gold);
+        border-right: 3px solid var(--gold);
+    }
+    
+    .menu-icon {
+        width: 20px;
+        text-align: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+    
+    .menu-label {
+        flex: 1;
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+    
+    .admin-sidebar.collapsed .menu-label {
+        display: none;
+    }
+    
+    .menu-badge {
+        padding: 4px 8px;
+        background: var(--gold);
+        color: var(--text-inverse);
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+        min-width: 20px;
+        text-align: center;
+    }
+    
+    /* Main Content */
+    .admin-content {
+        flex: 1;
+        margin-left: 280px;
+        transition: all var(--transition-normal);
+    }
+    
+    .admin-sidebar.collapsed ~ .admin-content {
+        margin-left: 80px;
+    }
+    
+    /* Top Bar */
+    .admin-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--card-bg);
+        border-bottom: 1px solid var(--border-color);
+        padding: 20px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: var(--shadow-md);
+    }
+    
+    .topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .page-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+    
+    .breadcrumb-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .breadcrumb-item:not(:last-child)::after {
+        content: '/';
+        color: var(--text-tertiary);
+    }
+    
+    /* Topbar Right */
+    .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .search-box {
+        position: relative;
+        width: 300px;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 12px 45px 12px 16px;
+        background: var(--surface-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        transition: all var(--transition-fast);
+    }
+    
+    .search-input:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+    }
+    
+    .search-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-tertiary);
+        cursor: pointer;
+    }
+    
+    .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .action-btn {
+        width: 44px;
+        height: 44px;
+        background: var(--surface-bg);
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        position: relative;
+        transition: all var(--transition-fast);
+    }
+    
+    .action-btn:hover {
+        background: var(--tertiary-bg);
+        color: var(--text-primary);
+        transform: translateY(-2px);
+    }
+    
+    .notification-badge {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: 8px;
+        height: 8px;
+        background: #ef4444;
+        border-radius: var(--radius-full);
+        border: 2px solid var(--card-bg);
+    }
+    
+    .admin-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 15px;
+        background: var(--surface-bg);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .admin-profile:hover {
+        background: var(--tertiary-bg);
+    }
+    
+    .profile-avatar {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--gold) 0%, var(--rose-gold) 100%);
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: var(--text-inverse);
+        font-weight: 600;
+    }
+    
+    .profile-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .profile-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+    
+    .profile-role {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+    }
+    
+    /* Content Area */
+    .content-wrapper {
+        padding: 30px;
+        min-height: calc(100vh - 88px);
+        background: var(--primary-bg);
+    }
+    
+    /* Dashboard Overview */
+    .dashboard-overview {
+        margin-bottom: 40px;
+    }
+    
+    .overview-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: var(--card-bg);
+        border-radius: var(--radius-xl);
+        padding: 30px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: all var(--transition-fast);
+        border: 1px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--gold) 0%, var(--rose-gold) 100%);
+    }
+    
+    .stat-card:hover {
+        border-color: var(--gold);
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-gold);
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--gold) 0%, var(--rose-gold) 100%);
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--text-inverse);
+    }
+    
+    .stat-info {
+        flex: 1;
+    }
+    
+    .stat-title {
+        font-size: 0.9rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 5px;
+    }
+    
+    .stat-change {
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .change-up {
+        color: #10b981;
+    }
+    
+    .change-down {
+        color: #ef4444;
+    }
+    
+    /* Charts Section */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+    
+    @media (max-width: 1200px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .chart-card {
+        background: var(--card-bg);
+        border-radius: var(--radius-xl);
+        padding: 30px;
+        border: 1px solid var(--border-color);
+    }
+    
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+    
+    .chart-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    
+    .chart-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .chart-placeholder {
+        height: 300px;
+        background: var(--surface-bg);
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-tertiary);
+        font-size: 1.1rem;
+    }
+    
+    /* Recent Activity */
+    .recent-activity {
+        background: var(--card-bg);
+        border-radius: var(--radius-xl);
+        padding: 30px;
+        border: 1px solid var(--border-color);
+    }
+    
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background: var(--surface-bg);
+        border-radius: var(--radius-lg);
+        transition: all var(--transition-fast);
+    }
+    
+    .activity-item:hover {
+        background: var(--tertiary-bg);
+        transform: translateX(5px);
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--gold);
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-inverse);
+        font-size: 1rem;
+    }
+    
+    .activity-content {
+        flex: 1;
+    }
+    
+    .activity-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 5px;
+    }
+    
+    .activity-time {
+        font-size: 0.85rem;
+        color: var(--text-tertiary);
+    }
+    
+    /* Tables */
+    .data-table {
+        background: var(--card-bg);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+    }
+    
+    .table-header {
+        padding: 25px 30px;
+        background: var(--surface-bg);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .table-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .table-actions {
+        display: flex;
+        gap: 15px;
+    }
+    
+    .table-content {
+        overflow-x: auto;
+    }
+    
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 800px;
+    }
+    
+    .table th {
+        padding: 20px;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary);
+        border-bottom: 1px solid var(--border-color);
+        background: var(--surface-bg);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .table td {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-secondary);
+    }
+    
+    .table tr:hover {
+        background: rgba(212, 175, 55, 0.05);
+    }
+    
+    .table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Status Badges */
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: var(--radius-full);
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .status-active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+    
+    .status-inactive {
+        background: rgba(148, 163, 184, 0.1);
+        color: #94a3b8;
+    }
+    
+    .status-pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+    
+    .status-completed {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--surface-bg);
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        transition: all var(--transition-fast);
+        border: 1px solid var(--border-color);
+    }
+    
+    .btn-icon:hover {
+        background: var(--tertiary-bg);
+        color: var(--text-primary);
+        border-color: var(--gold);
+    }
+    
+    .btn-icon.edit:hover {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+    }
+    
+    .btn-icon.delete:hover {
+        background: #ef4444;
+        color: white;
+        border-color: #ef4444;
+    }
+    
+    /* Forms */
+    .form-card {
+        background: var(--card-bg);
+        border-radius: var(--radius-xl);
+        padding: 40px;
+        max-width: 800px;
+        margin: 0 auto;
+        border: 1px solid var(--border-color);
+    }
+    
+    .form-header {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .form-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 10px;
+    }
+    
+    .form-subtitle {
+        color: var(--text-secondary);
+        font-size: 1rem;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+    
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group.full-width {
+        grid-column: span 2;
+    }
+    
+    @media (max-width: 768px) {
+        .form-group.full-width {
+            grid-column: span 1;
+        }
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 14px 16px;
+        background: var(--surface-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all var(--transition-fast);
+    }
+    
+    .form-control:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+    }
+    
+    .form-textarea {
+        min-height: 150px;
+        resize: vertical;
+    }
+    
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        padding-top: 30px;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .btn-primary {
+        padding: 14px 30px;
+        background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+        color: var(--text-inverse);
+        border-radius: var(--radius-lg);
+        font-size: 1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all var(--transition-normal);
+        box-shadow: var(--shadow-gold);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(212, 175, 55, 0.4);
+    }
+    
+    .btn-secondary {
+        padding: 14px 30px;
+        background: var(--surface-bg);
+        color: var(--text-primary);
+        border-radius: var(--radius-lg);
+        font-size: 1rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all var(--transition-fast);
+        border: 1px solid var(--border-color);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--tertiary-bg);
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    /* File Upload */
+    .file-upload {
+        border: 2px dashed var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .file-upload:hover {
+        border-color: var(--gold);
+        background: rgba(212, 175, 55, 0.05);
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        color: var(--text-tertiary);
+        margin-bottom: 15px;
+    }
+    
+    .upload-text {
+        color: var(--text-secondary);
+        margin-bottom: 10px;
+    }
+    
+    .upload-note {
+        font-size: 0.85rem;
+        color: var(--text-tertiary);
+    }
+    
+    /* Responsive */
+    @media (max-width: 992px) {
+        .admin-sidebar {
+            transform: translateX(-100%);
+        }
+        
+        .admin-sidebar.active {
+            transform: translateX(0);
+        }
+        
+        .admin-content {
+            margin-left: 0 !important;
+        }
+        
+        .sidebar-toggle {
+            display: flex;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .topbar-right {
+            display: none;
+        }
+        
+        .content-wrapper {
+            padding: 20px;
+        }
+        
+        .overview-cards {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-card {
+            padding: 25px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Admin Page -->
+    <div class="admin-page">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <!-- Sidebar Header -->
+            <div class="sidebar-header">
+                <div class="admin-logo">
+                    <div class="admin-logo-icon">VE</div>
+                    <div class="admin-logo-text">VOGUE ÉLITE ADMIN</div>
+                </div>
+                <div class="sidebar-toggle" id="sidebar-toggle">
+                    <i class="fas fa-chevron-left"></i>
+                </div>
+            </div>
+            
+            <!-- Sidebar Menu -->
+            <nav class="sidebar-menu">
+                <!-- Dashboard Section -->
+                <div class="menu-section">
+                    <div class="section-title">Главная</div>
+                    <div class="menu-items">
+                        <a href="#dashboard" class="menu-item active" data-section="dashboard">
+                            <i class="fas fa-chart-line menu-icon"></i>
+                            <span class="menu-label">Дашборд</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Products Section -->
+                <div class="menu-section">
+                    <div class="section-title">Товары</div>
+                    <div class="menu-items">
+                        <a href="#products" class="menu-item" data-section="products">
+                            <i class="fas fa-tshirt menu-icon"></i>
+                            <span class="menu-label">Все товары</span>
+                            <span class="menu-badge">142</span>
+                        </a>
+                        <a href="#add-product" class="menu-item" data-section="add-product">
+                            <i class="fas fa-plus-circle menu-icon"></i>
+                            <span class="menu-label">Добавить товар</span>
+                        </a>
+                        <a href="#categories" class="menu-item" data-section="categories">
+                            <i class="fas fa-tags menu-icon"></i>
+                            <span class="menu-label">Категории</span>
+                        </a>
+                        <a href="#inventory" class="menu-item" data-section="inventory">
+                            <i class="fas fa-boxes menu-icon"></i>
+                            <span class="menu-label">Склад</span>
+                            <span class="menu-badge">3</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Orders Section -->
+                <div class="menu-section">
+                    <div class="section-title">Заказы</div>
+                    <div class="menu-items">
+                        <a href="#orders" class="menu-item" data-section="orders">
+                            <i class="fas fa-shopping-bag menu-icon"></i>
+                            <span class="menu-label">Все заказы</span>
+                            <span class="menu-badge">24</span>
+                        </a>
+                        <a href="#pending-orders" class="menu-item" data-section="pending-orders">
+                            <i class="fas fa-clock menu-icon"></i>
+                            <span class="menu-label">В ожидании</span>
+                            <span class="menu-badge">5</span>
+                        </a>
+                        <a href="#processing-orders" class="menu-item" data-section="processing-orders">
+                            <i class="fas fa-cog menu-icon"></i>
+                            <span class="menu-label">В обработке</span>
+                            <span class="menu-badge">8</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Customers Section -->
+                <div class="menu-section">
+                    <div class="section-title">Клиенты</div>
+                    <div class="menu-items">
+                        <a href="#customers" class="menu-item" data-section="customers">
+                            <i class="fas fa-users menu-icon"></i>
+                            <span class="menu-label">Все клиенты</span>
+                            <span class="menu-badge">1,248</span>
+                        </a>
+                        <a href="#vip-customers" class="menu-item" data-section="vip-customers">
+                            <i class="fas fa-crown menu-icon"></i>
+                            <span class="menu-label">VIP Клиенты</span>
+                            <span class="menu-badge">56</span>
+                        </a>
+                        <a href="#reviews" class="menu-item" data-section="reviews">
+                            <i class="fas fa-star menu-icon"></i>
+                            <span class="menu-label">Отзывы</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Analytics Section -->
+                <div class="menu-section">
+                    <div class="section-title">Аналитика</div>
+                    <div class="menu-items">
+                        <a href="#sales" class="menu-item" data-section="sales">
+                            <i class="fas fa-chart-bar menu-icon"></i>
+                            <span class="menu-label">Продажи</span>
+                        </a>
+                        <a href="#reports" class="menu-item" data-section="reports">
+                            <i class="fas fa-file-alt menu-icon"></i>
+                            <span class="menu-label">Отчеты</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Settings Section -->
+                <div class="menu-section">
+                    <div class="section-title">Настройки</div>
+                    <div class="menu-items">
+                        <a href="#settings" class="menu-item" data-section="settings">
+                            <i class="fas fa-cog menu-icon"></i>
+                            <span class="menu-label">Общие</span>
+                        </a>
+                        <a href="#users" class="menu-item" data-section="users">
+                            <i class="fas fa-user-shield menu-icon"></i>
+                            <span class="menu-label">Администраторы</span>
+                        </a>
+                        <a href="#shipping" class="menu-item" data-section="shipping">
+                            <i class="fas fa-shipping-fast menu-icon"></i>
+                            <span class="menu-label">Доставка</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Logout -->
+                <div class="menu-section">
+                    <div class="menu-items">
+                        <a href="{{ url_for('logout') }}" class="menu-item">
+                            <i class="fas fa-sign-out-alt menu-icon"></i>
+                            <span class="menu-label">Выйти</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="admin-content">
+            <!-- Top Bar -->
+            <header class="admin-topbar">
+                <div class="topbar-left">
+                    <div class="mobile-toggle" id="mobile-toggle" style="display: none;">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                    <div class="page-title">
+                        <span id="page-title">Дашборд</span>
+                    </div>
+                    <div class="breadcrumb">
+                        <span class="breadcrumb-item">Главная</span>
+                        <span class="breadcrumb-item" id="breadcrumb-item">Дашборд</span>
+                    </div>
+                </div>
+                
+                <div class="topbar-right">
+                    <!-- Search Box -->
+                    <div class="search-box">
+                        <input type="text" class="search-input" placeholder="Поиск...">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="topbar-actions">
+                        <div class="action-btn notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge"></span>
+                        </div>
+                        <div class="action-btn">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                        
+                        <!-- Admin Profile -->
+                        <div class="admin-profile" id="admin-profile">
+                            <div class="profile-avatar">A</div>
+                            <div class="profile-info">
+                                <div class="profile-name">Администратор</div>
+                                <div class="profile-role">Супер-админ</div>
+                            </div>
+                            <i class="fas fa-chevron-down" style="font-size: 12px; color: var(--text-tertiary);"></i>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Content Wrapper -->
+            <div class="content-wrapper">
+                <!-- Dashboard Section -->
+                <section id="dashboard-section" class="admin-section active">
+                    <!-- Overview Cards -->
+                    <div class="dashboard-overview">
+                        <div class="overview-cards">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-euro-sign"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-title">Общая выручка</div>
+                                    <div class="stat-value">245,680 €</div>
+                                    <div class="stat-change change-up">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <span>+12.5% за месяц</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-shopping-bag"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-title">Всего заказов</div>
+                                    <div class="stat-value">1,248</div>
+                                    <div class="stat-change change-up">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <span>+8.2% за месяц</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-title">Клиентов</div>
+                                    <div class="stat-value">856</div>
+                                    <div class="stat-change change-up">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <span>+5.4% за месяц</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-title">Конверсия</div>
+                                    <div class="stat-value">4.8%</div>
+                                    <div class="stat-change change-down">
+                                        <i class="fas fa-arrow-down"></i>
+                                        <span>-0.3% за неделю</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Charts -->
+                        <div class="charts-grid">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">Продажи за месяц</h3>
+                                    <div class="chart-actions">
+                                        <button class="btn-icon">
+                                            <i class="fas fa-calendar"></i>
+                                        </button>
+                                        <button class="btn-icon">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="chart-placeholder">
+                                    График продаж (интеграция с Chart.js)
+                                </div>
+                            </div>
+                            
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">Топ категории</h3>
+                                    <div class="chart-actions">
+                                        <button class="btn-icon">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="chart-placeholder">
+                                    Круговая диаграмма категорий
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity -->
+                        <div class="recent-activity">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Последняя активность</h3>
+                                <div class="chart-actions">
+                                    <button class="btn-icon">
+                                        <i class="fas fa-sync"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="activity-list">
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">Новый заказ #ORD-001256</div>
+                                        <div class="activity-time">2 минуты назад • 4,500 €</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">Новый VIP клиент зарегистрирован</div>
+                                        <div class="activity-time">15 минут назад • Анна Петрова</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-box"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">Товар "Вечернее платье" закончился</div>
+                                        <div class="activity-time">1 час назад • Остаток: 0 шт.</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">Новый отзыв на 5 звезд</div>
+                                        <div class="activity-time">2 часа назад • Мария Иванова</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-truck"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">Заказ #ORD-001255 отправлен</div>
+                                        <div class="activity-time">3 часа назад • Курьер: DHL Express</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Products Section -->
+                <section id="products-section" class="admin-section" style="display: none;">
+                    <div class="data-table">
+                        <div class="table-header">
+                            <h3 class="table-title">
+                                <i class="fas fa-tshirt"></i>
+                                <span>Все товары</span>
+                            </h3>
+                            <div class="table-actions">
+                                <button class="btn-primary" onclick="showSection('add-product')">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Добавить товар</span>
+                                </button>
+                                <button class="btn-secondary">
+                                    <i class="fas fa-filter"></i>
+                                    <span>Фильтр</span>
+                                </button>
+                                <button class="btn-secondary">
+                                    <i class="fas fa-download"></i>
+                                    <span>Экспорт</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-content">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Товар</th>
+                                        <th>Категория</th>
+                                        <th>Цена</th>
+                                        <th>На складе</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for i in range(10) %}
+                                    <tr>
+                                        <td>#PROD-{{ "00%s"|format(loop.index) }}</td>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div style="width: 50px; height: 50px; background: var(--surface-bg); border-radius: var(--radius-md); overflow: hidden;">
+                                                    <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=100&h=100&fit=crop&q=80" alt="Товар" style="width: 100%; height: 100%; object-fit: cover;">
+                                                </div>
+                                                <div>
+                                                    <div style="font-weight: 600; color: var(--text-primary);">Вечернее платье с золотой вышивкой</div>
+                                                    <div style="font-size: 0.85rem; color: var(--text-tertiary);">Арт: VE-{{ 1000 + loop.index }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>Платья</td>
+                                        <td>
+                                            <div style="font-weight: 700; color: var(--gold);">4,500 €</div>
+                                            {% if loop.index % 3 == 0 %}
+                                            <div style="text-decoration: line-through; color: var(--text-tertiary); font-size: 0.85rem;">5,200 €</div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if loop.index % 4 == 0 %}
+                                            <span style="color: #ef4444; font-weight: 600;">0 шт.</span>
+                                            {% elif loop.index % 3 == 0 %}
+                                            <span style="color: #f59e0b; font-weight: 600;">{{ 5 + loop.index }} шт.</span>
+                                            {% else %}
+                                            <span style="color: #10b981; font-weight: 600;">{{ 15 + loop.index }} шт.</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if loop.index % 4 == 0 %}
+                                            <span class="status-badge status-inactive">Неактивен</span>
+                                            {% else %}
+                                            <span class="status-badge status-active">Активен</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-icon edit" title="Редактировать">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn-icon" title="Просмотреть">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn-icon delete" title="Удалить">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Add Product Section -->
+                <section id="add-product-section" class="admin-section" style="display: none;">
+                    <div class="form-card">
+                        <div class="form-header">
+                            <h2 class="form-title">Добавить новый товар</h2>
+                            <p class="form-subtitle">Заполните информацию о товаре для добавления в каталог</p>
+                        </div>
+                        
+                        <form id="add-product-form">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Название товара *</label>
+                                    <input type="text" class="form-control" placeholder="Вечернее платье с золотой вышивкой" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Артикул *</label>
+                                    <input type="text" class="form-control" placeholder="VE-0001" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Категория *</label>
+                                    <select class="form-control" required>
+                                        <option value="">Выберите категорию</option>
+                                        <option value="dresses">Платья</option>
+                                        <option value="suits">Костюмы</option>
+                                        <option value="blouses">Блузы</option>
+                                        <option value="pants">Брюки</option>
+                                        <option value="skirts">Юбки</option>
+                                        <option value="jackets">Куртки</option>
+                                        <option value="coats">Пальто</option>
+                                        <option value="shoes">Обувь</option>
+                                        <option value="bags">Сумки</option>
+                                        <option value="jewelry">Украшения</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Бренд</label>
+                                    <select class="form-control">
+                                        <option value="">Выберите бренд</option>
+                                        <option value="vogue" selected>VOGUE ÉLITE</option>
+                                        <option value="dior">Dior</option>
+                                        <option value="chanel">Chanel</option>
+                                        <option value="gucci">Gucci</option>
+                                        <option value="prada">Prada</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Цена *</label>
+                                    <input type="number" class="form-control" placeholder="4500" step="0.01" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Старая цена</label>
+                                    <input type="number" class="form-control" placeholder="5200" step="0.01">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Количество на складе *</label>
+                                    <input type="number" class="form-control" placeholder="10" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Размеры</label>
+                                    <input type="text" class="form-control" placeholder="XS, S, M, L, XL">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Цвета</label>
+                                    <input type="text" class="form-control" placeholder="Черный, Золотой, Белый">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">Краткое описание</label>
+                                    <textarea class="form-control" rows="3" placeholder="Краткое описание товара для карточки..."></textarea>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">Подробное описание</label>
+                                    <textarea class="form-control form-textarea" placeholder="Подробное описание товара с характеристиками..."></textarea>
+                                </div>
+                                
+                                <!-- Image Upload -->
+                                <div class="form-group full-width">
+                                    <label class="form-label">Изображения товара</label>
+                                    <div class="file-upload" id="image-upload">
+                                        <div class="upload-icon">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                        </div>
+                                        <div class="upload-text">Перетащите изображения сюда или нажмите для загрузки</div>
+                                        <div class="upload-note">Поддерживаемые форматы: JPG, PNG, GIF. Максимальный размер: 5MB</div>
+                                    </div>
+                                    <div id="uploaded-images" style="margin-top: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;"></div>
+                                </div>
+                                
+                                <!-- Tags and Options -->
+                                <div class="form-group full-width">
+                                    <label class="form-label">Метки и статусы</label>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;">
+                                        <label class="checkbox-group" style="display: flex; align-items: center; gap: 8px;">
+                                            <input type="checkbox" checked>
+                                            <span class="checkbox-custom"></span>
+                                            <span class="checkbox-label">Новинка</span>
+                                        </label>
+                                        <label class="checkbox-group" style="display: flex; align-items: center; gap: 8px;">
+                                            <input type="checkbox">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="checkbox-label">Эксклюзив</span>
+                                        </label>
+                                        <label class="checkbox-group" style="display: flex; align-items: center; gap: 8px;">
+                                            <input type="checkbox">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="checkbox-label">Лимитированная серия</span>
+                                        </label>
+                                        <label class="checkbox-group" style="display: flex; align-items: center; gap: 8px;">
+                                            <input type="checkbox">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="checkbox-label">Со скидкой</span>
+                                        </label>
+                                        <label class="checkbox-group" style="display: flex; align-items: center; gap: 8px;">
+                                            <input type="checkbox" checked>
+                                            <span class="checkbox-custom"></span>
+                                            <span class="checkbox-label">Активен</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="btn-secondary" onclick="showSection('products')">
+                                    <i class="fas fa-times"></i>
+                                    <span>Отмена</span>
+                                </button>
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    <span>Сохранить товар</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+                
+                <!-- Orders Section -->
+                <section id="orders-section" class="admin-section" style="display: none;">
+                    <div class="data-table">
+                        <div class="table-header">
+                            <h3 class="table-title">
+                                <i class="fas fa-shopping-bag"></i>
+                                <span>Все заказы</span>
+                            </h3>
+                            <div class="table-actions">
+                                <button class="btn-secondary">
+                                    <i class="fas fa-filter"></i>
+                                    <span>Фильтр</span>
+                                </button>
+                                <button class="btn-secondary">
+                                    <i class="fas fa-download"></i>
+                                    <span>Экспорт</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-content">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Заказ #</th>
+                                        <th>Клиент</th>
+                                        <th>Дата</th>
+                                        <th>Сумма</th>
+                                        <th>Статус</th>
+                                        <th>Оплата</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for i in range(10) %}
+                                    <tr>
+                                        <td class="order-id">#ORD-00{{ 1250 + loop.index }}</td>
+                                        <td>
+                                            <div style="font-weight: 600; color: var(--text-primary);">Анна Петрова</div>
+                                            <div style="font-size: 0.85rem; color: var(--text-tertiary);">anna@email.com</div>
+                                        </td>
+                                        <td>{{ loop.index }} января 2024</td>
+                                        <td>
+                                            <div style="font-weight: 700; color: var(--gold);">{{ 1500 + loop.index * 500 }} €</div>
+                                        </td>
+                                        <td>
+                                            {% set statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'] %}
+                                            {% set status = statuses[loop.index % 5] %}
+                                            {% if status == 'pending' %}
+                                            <span class="status-badge status-pending">В ожидании</span>
+                                            {% elif status == 'processing' %}
+                                            <span class="status-badge status-pending">Обрабатывается</span>
+                                            {% elif status == 'shipped' %}
+                                            <span class="status-badge status-pending">Отправлен</span>
+                                            {% elif status == 'delivered' %}
+                                            <span class="status-badge status-completed">Доставлен</span>
+                                            {% else %}
+                                            <span class="status-badge status-inactive">Отменен</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% set payments = ['card', 'paypal', 'apple-pay', 'google-pay'] %}
+                                            {% set payment = payments[loop.index % 4] %}
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <i class="fab fa-cc-visa" style="color: #1a1f71;"></i>
+                                                <span>Карта</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-icon edit" title="Редактировать">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn-icon" title="Просмотреть">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn-icon" title="Печать">
+                                                    <i class="fas fa-print"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Customers Section -->
+                <section id="customers-section" class="admin-section" style="display: none;">
+                    <div class="data-table">
+                        <div class="table-header">
+                            <h3 class="table-title">
+                                <i class="fas fa-users"></i>
+                                <span>Все клиенты</span>
+                            </h3>
+                            <div class="table-actions">
+                                <button class="btn-secondary">
+                                    <i class="fas fa-filter"></i>
+                                    <span>Фильтр</span>
+                                </button>
+                                <button class="btn-secondary">
+                                    <i class="fas fa-download"></i>
+                                    <span>Экспорт</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-content">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Клиент</th>
+                                        <th>Email</th>
+                                        <th>Телефон</th>
+                                        <th>Заказы</th>
+                                        <th>Сумма</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for i in range(10) %}
+                                    <tr>
+                                        <td>#CUST-{{ "00%s"|format(loop.index) }}</td>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--gold) 0%, var(--rose-gold) 100%); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                                                    {{ ['А', 'М', 'И', 'Е', 'С'][loop.index % 5] }}
+                                                </div>
+                                                <div>
+                                                    <div style="font-weight: 600; color: var(--text-primary);">{{ ['Анна Петрова', 'Мария Иванова', 'Ирина Смирнова', 'Елена Ковалева', 'София Новикова'][loop.index % 5] }}</div>
+                                                    <div style="font-size: 0.85rem; color: var(--text-tertiary);">
+                                                        {% if loop.index % 3 == 0 %}
+                                                        VIP Platinum
+                                                        {% elif loop.index % 2 == 0 %}
+                                                        VIP Gold
+                                                        {% else %}
+                                                        Стандарт
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>client{{ loop.index }}@email.com</td>
+                                        <td>+7 (999) 999-99-{{ loop.index }}</td>
+                                        <td>{{ 1 + loop.index }}</td>
+                                        <td>{{ (1500 + loop.index * 500) * (1 + loop.index) }} €</td>
+                                        <td>
+                                            {% if loop.index % 3 == 0 %}
+                                            <span class="status-badge status-active">Активен</span>
+                                            {% else %}
+                                            <span class="status-badge status-inactive">Неактивен</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-icon edit" title="Редактировать">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn-icon" title="Просмотреть">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn-icon" title="Отправить email">
+                                                    <i class="fas fa-envelope"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Settings Section -->
+                <section id="settings-section" class="admin-section" style="display: none;">
+                    <div class="form-card">
+                        <div class="form-header">
+                            <h2 class="form-title">Настройки магазина</h2>
+                            <p class="form-subtitle">Управление основными параметрами вашего магазина</p>
+                        </div>
+                        
+                        <form id="settings-form">
+                            <div class="form-grid">
+                                <!-- General Settings -->
+                                <div class="form-group full-width">
+                                    <h3 class="group-title" style="margin-bottom: 20px;">
+                                        <i class="fas fa-store"></i>
+                                        <span>Основные настройки</span>
+                                    </h3>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Название магазина *</label>
+                                    <input type="text" class="form-control" value="VOGUE ÉLITE" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Email магазина *</label>
+                                    <input type="email" class="form-control" value="info@vogue-elite.ru" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Телефон магазина</label>
+                                    <input type="tel" class="form-control" value="+7 (800) 555-35-35">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Валюта</label>
+                                    <select class="form-control">
+                                        <option value="EUR" selected>Евро (€)</option>
+                                        <option value="USD">Доллар ($)</option>
+                                        <option value="RUB">Рубль (₽)</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Store Details -->
+                                <div class="form-group full-width">
+                                    <label class="form-label">Адрес магазина</label>
+                                    <textarea class="form-control" rows="3">Москва, ул. Тверская, д. 1</textarea>
+                                </div>
+                                
+                                <!-- Shipping Settings -->
+                                <div class="form-group full-width">
+                                    <h3 class="group-title" style="margin-bottom: 20px;">
+                                        <i class="fas fa-shipping-fast"></i>
+                                        <span>Настройки доставки</span>
+                                    </h3>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Стоимость доставки</label>
+                                    <input type="number" class="form-control" value="30" step="0.01">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Бесплатная доставка от</label>
+                                    <input type="number" class="form-control" value="20000" step="0.01">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Сроки доставки (дни)</label>
+                                    <input type="number" class="form-control" value="3-5">
+                                </div>
+                                
+                                <!-- Tax Settings -->
+                                <div class="form-group">
+                                    <label class="form-label">НДС (%)</label>
+                                    <input type="number" class="form-control" value="20" step="0.1">
+                                </div>
+                                
+                                <!-- Maintenance -->
+                                <div class="form-group full-width">
+                                    <h3 class="group-title" style="margin-bottom: 20px;">
+                                        <i class="fas fa-tools"></i>
+                                        <span>Технические настройки</span>
+                                    </h3>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="checkbox-group">
+                                        <input type="checkbox">
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-label">Режим технического обслуживания</span>
+                                    </label>
+                                    <div style="font-size: 0.85rem; color: var(--text-tertiary); margin-top: 5px;">
+                                        При включении магазин будет недоступен для покупателей
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="checkbox-group">
+                                        <input type="checkbox" checked>
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-label">Включить отладку</span>
+                                    </label>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="checkbox-group">
+                                        <input type="checkbox" checked>
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-label">Включить кэширование</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="reset" class="btn-secondary">
+                                    <i class="fas fa-undo"></i>
+                                    <span>Сбросить</span>
+                                </button>
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    <span>Сохранить настройки</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+                
+                <!-- Empty Sections (Placeholders) -->
+                <section id="categories-section" class="admin-section" style="display: none;">
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-tags"></i>
+                        </div>
+                        <h3 class="empty-title">Управление категориями</h3>
+                        <p class="empty-description">
+                            Раздел в разработке. Здесь будет управление категориями товаров.
+                        </p>
+                    </div>
+                </section>
+                
+                <section id="inventory-section" class="admin-section" style="display: none;">
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <h3 class="empty-title">Управление складом</h3>
+                        <p class="empty-description">
+                            Раздел в разработке. Здесь будет управление запасами товаров.
+                        </p>
+                    </div>
+                </section>
+                
+                <!-- Other sections similarly... -->
+            </div>
+        </main>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sidebar Toggle
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const adminSidebar = document.querySelector('.admin-sidebar');
+        
+        sidebarToggle.addEventListener('click', function() {
+            adminSidebar.classList.toggle('collapsed');
+            const icon = this.querySelector('i');
+            if (adminSidebar.classList.contains('collapsed')) {
+                icon.className = 'fas fa-chevron-right';
+            } else {
+                icon.className = 'fas fa-chevron-left';
+            }
+        });
+        
+        // Mobile Toggle
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', function() {
+                adminSidebar.classList.toggle('active');
+            });
+        }
+        
+        // Check screen size for mobile
+        function checkScreenSize() {
+            if (window.innerWidth <= 992) {
+                adminSidebar.classList.remove('collapsed');
+                if (mobileToggle) mobileToggle.style.display = 'flex';
+                sidebarToggle.style.display = 'none';
+            } else {
+                if (mobileToggle) mobileToggle.style.display = 'none';
+                sidebarToggle.style.display = 'flex';
+            }
+        }
+        
+        checkScreenSize();
+        window.addEventListener('resize', checkScreenSize);
+        
+        // Menu Navigation
+        const menuItems = document.querySelectorAll('.menu-item[data-section]');
+        const sections = document.querySelectorAll('.admin-section');
+        const pageTitle = document.getElementById('page-title');
+        const breadcrumbItem = document.getElementById('breadcrumb-item');
+        
+        // Menu titles mapping
+        const menuTitles = {
+            'dashboard': 'Дашборд',
+            'products': 'Все товары',
+            'add-product': 'Добавить товар',
+            'categories': 'Категории',
+            'inventory': 'Склад',
+            'orders': 'Все заказы',
+            'pending-orders': 'Заказы в ожидании',
+            'processing-orders': 'Заказы в обработке',
+            'customers': 'Все клиенты',
+            'vip-customers': 'VIP Клиенты',
+            'reviews': 'Отзывы',
+            'sales': 'Аналитика продаж',
+            'reports': 'Отчеты',
+            'settings': 'Настройки магазина',
+            'users': 'Администраторы',
+            'shipping': 'Настройки доставки'
+        };
+        
+        menuItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const sectionId = this.getAttribute('data-section');
+                
+                // Update active menu item
+                menuItems.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Hide all sections
+                sections.forEach(section => {
+                    section.style.display = 'none';
+                    section.classList.remove('active');
+                });
+                
+                // Show selected section
+                const activeSection = document.getElementById(`${sectionId}-section`);
+                if (activeSection) {
+                    activeSection.style.display = 'block';
+                    activeSection.classList.add('active');
+                    
+                    // Update page title
+                    if (pageTitle && breadcrumbItem) {
+                        pageTitle.textContent = menuTitles[sectionId] || 'Админ-панель';
+                        breadcrumbItem.textContent = menuTitles[sectionId] || 'Раздел';
+                    }
+                }
+                
+                // Close sidebar on mobile
+                if (window.innerWidth <= 992) {
+                    adminSidebar.classList.remove('active');
+                }
+            });
+        });
+        
+        // Show section function
+        window.showSection = function(sectionId) {
+            const menuItem = document.querySelector(`.menu-item[data-section="${sectionId}"]`);
+            if (menuItem) {
+                menuItem.click();
+            }
+        };
+        
+        // Image Upload
+        const imageUpload = document.getElementById('image-upload');
+        const uploadedImages = document.getElementById('uploaded-images');
+        
+        if (imageUpload) {
+            imageUpload.addEventListener('click', function() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.multiple = true;
+                
+                input.addEventListener('change', function(e) {
+                    const files = e.target.files;
+                    for (let i = 0; i < Math.min(files.length, 5); i++) {
+                        const file = files[i];
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(e) {
+                            const imageDiv = document.createElement('div');
+                            imageDiv.style.position = 'relative';
+                            imageDiv.style.borderRadius = 'var(--radius-md)';
+                            imageDiv.style.overflow = 'hidden';
+                            
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.style.width = '100%';
+                            img.style.height = '100px';
+                            img.style.objectFit = 'cover';
+                            
+                            const removeBtn = document.createElement('button');
+                            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                            removeBtn.style.position = 'absolute';
+                            removeBtn.style.top = '5px';
+                            removeBtn.style.right = '5px';
+                            removeBtn.style.width = '24px';
+                            removeBtn.style.height = '24px';
+                            removeBtn.style.background = 'rgba(239, 68, 68, 0.9)';
+                            removeBtn.style.color = 'white';
+                            removeBtn.style.borderRadius = '50%';
+                            removeBtn.style.display = 'flex';
+                            removeBtn.style.alignItems = 'center';
+                            removeBtn.style.justifyContent = 'center';
+                            removeBtn.style.border = 'none';
+                            removeBtn.style.cursor = 'pointer';
+                            removeBtn.style.fontSize = '10px';
+                            
+                            removeBtn.addEventListener('click', function() {
+                                imageDiv.remove();
+                            });
+                            
+                            imageDiv.appendChild(img);
+                            imageDiv.appendChild(removeBtn);
+                            uploadedImages.appendChild(imageDiv);
+                        };
+                        
+                        reader.readAsDataURL(file);
+                    }
+                });
+                
+                input.click();
+            });
+        }
+        
+        // Form Submissions
+        const forms = ['add-product-form', 'settings-form'];
+        forms.forEach(formId => {
+            const form = document.getElementById(formId);
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalHtml = submitBtn.innerHTML;
+                    
+                    // Show loading state
+                    submitBtn.innerHTML = `
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Сохранение...</span>
+                    `;
+                    submitBtn.disabled = true;
+                    
+                    // Simulate API call
+                    setTimeout(() => {
+                        submitBtn.innerHTML = originalHtml;
+                        submitBtn.disabled = false;
+                        
+                        // Show success notification
+                        showNotification('Изменения успешно сохранены', 'success');
+                        
+                        // Redirect for product form
+                        if (formId === 'add-product-form') {
+                            setTimeout(() => {
+                                showSection('products');
+                            }, 1500);
+                        }
+                    }, 2000);
+                });
+            }
+        });
+        
+        // Table Actions
+        document.querySelectorAll('.btn-icon.edit').forEach(btn => {
+            btn.addEventListener('click', function() {
+                showNotification('Редактирование элемента', 'info');
+            });
+        });
+        
+        document.querySelectorAll('.btn-icon.delete').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (confirm('Вы уверены, что хотите удалить этот элемент?')) {
+                    const row = this.closest('tr');
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(-20px)';
+                    
+                    setTimeout(() => {
+                        row.remove();
+                        showNotification('Элемент успешно удален', 'success');
+                    }, 300);
+                }
+            });
+        });
+        
+        // Search Functionality
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    showNotification(`Поиск: "${this.value}"`, 'info');
+                }
+            });
+        }
+        
+        // Notification Button
+        const notificationBtn = document.querySelector('.notification-btn');
+        if (notificationBtn) {
+            notificationBtn.addEventListener('click', function() {
+                showNotification('У вас 5 новых уведомлений', 'info');
+                this.querySelector('.notification-badge').style.display = 'none';
+            });
+        }
+        
+        // Admin Profile Dropdown
+        const adminProfile = document.getElementById('admin-profile');
+        if (adminProfile) {
+            adminProfile.addEventListener('click', function() {
+                // In real app, show dropdown menu
+                showNotification('Профиль администратора', 'info');
+            });
+        }
+        
+        // Helper function to show notifications
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationMessage = document.getElementById('notification-message');
+            
+            if (!notification || !notificationMessage) {
+                // Create notification if doesn't exist
+                const notificationDiv = document.createElement('div');
+                notificationDiv.id = 'notification';
+                notificationDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+                    color: white;
+                    border-radius: var(--radius-lg);
+                    box-shadow: var(--shadow-lg);
+                    z-index: 9999;
+                    transform: translateX(150%);
+                    transition: transform 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                `;
+                
+                const messageSpan = document.createElement('span');
+                messageSpan.id = 'notification-message';
+                
+                const closeBtn = document.createElement('button');
+                closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                closeBtn.style.cssText = `
+                    background: none;
+                    border: none;
+                    color: white;
+                    cursor: pointer;
+                    font-size: 14px;
+                    margin-left: 10px;
+                `;
+                
+                notificationDiv.appendChild(messageSpan);
+                notificationDiv.appendChild(closeBtn);
+                document.body.appendChild(notificationDiv);
+                
+                closeBtn.addEventListener('click', function() {
+                    notificationDiv.style.transform = 'translateX(150%)';
+                });
+            }
+            
+            const notification = document.getElementById('notification');
+            const notificationMessage = document.getElementById('notification-message');
+            
+            notificationMessage.textContent = message;
+            
+            // Set color based on type
+            if (type === 'success') {
+                notification.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            } else if (type === 'error') {
+                notification.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            } else if (type === 'warning') {
+                notification.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+            } else {
+                notification.style.background = 'linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%)';
+            }
+            
+            notification.style.transform = 'translateX(0)';
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(150%)';
+            }, 3000);
+        }
+        
+        // Initialize DataTables (mock data)
+        function initializeTables() {
+            // Product table sorting
+            const productTable = document.querySelector('#products-section .table');
+            if (productTable) {
+                const headers = productTable.querySelectorAll('th');
+                headers.forEach((header, index) => {
+                    header.style.cursor = 'pointer';
+                    header.addEventListener('click', function() {
+                        sortTable(productTable, index);
+                    });
+                });
+            }
+        }
+        
+        // Simple table sorting
+        function sortTable(table, column) {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            const isAscending = table.getAttribute('data-sort-dir') !== 'asc';
+            
+            rows.sort((a, b) => {
+                const aVal = a.querySelectorAll('td')[column].textContent.trim();
+                const bVal = b.querySelectorAll('td')[column].textContent.trim();
+                
+                // Handle numeric values
+                const aNum = parseFloat(aVal.replace(/[^\d.-]/g, ''));
+                const bNum = parseFloat(bVal.replace(/[^\d.-]/g, ''));
+                
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return isAscending ? aNum - bNum : bNum - aNum;
+                }
+                
+                // Handle text values
+                return isAscending 
+                    ? aVal.localeCompare(bVal)
+                    : bVal.localeCompare(aVal);
+            });
+            
+            // Clear and re-append rows
+            rows.forEach(row => tbody.appendChild(row));
+            table.setAttribute('data-sort-dir', isAscending ? 'asc' : 'desc');
+        }
+        
+        // Export functionality
+        document.querySelectorAll('.btn-secondary .fa-download').forEach(icon => {
+            icon.closest('button').addEventListener('click', function() {
+                showNotification('Экспорт данных начат. Файл будет скачан в течение нескольких секунд.', 'success');
+                
+                // Simulate download
+                setTimeout(() => {
+                    showNotification('Экспорт завершен успешно!', 'success');
+                }, 1500);
+            });
+        });
+        
+        // Filter functionality
+        document.querySelectorAll('.btn-secondary .fa-filter').forEach(icon => {
+            icon.closest('button').addEventListener('click', function() {
+                const tableTitle = this.closest('.table-header').querySelector('.table-title span').textContent;
+                showNotification(`Открыт фильтр для: ${tableTitle}`, 'info');
+            });
+        });
+        
+        // Print functionality
+        document.querySelectorAll('.btn-icon .fa-print').forEach(icon => {
+            icon.closest('button').addEventListener('click', function() {
+                const row = this.closest('tr');
+                const orderId = row.querySelector('.order-id')?.textContent || 'Заказ';
+                showNotification(`Печать ${orderId}`, 'info');
+            });
+        });
+        
+        // Email functionality
+        document.querySelectorAll('.btn-icon .fa-envelope').forEach(icon => {
+            icon.closest('button').addEventListener('click', function() {
+                const row = this.closest('tr');
+                const customerName = row.querySelector('td:nth-child(2) div div:first-child')?.textContent || 'Клиента';
+                showNotification(`Отправка email ${customerName}`, 'info');
+            });
+        });
+        
+        // View functionality
+        document.querySelectorAll('.btn-icon .fa-eye').forEach(icon => {
+            icon.closest('button').addEventListener('click', function() {
+                const row = this.closest('tr');
+                const itemName = row.querySelector('td:nth-child(2) div div:first-child')?.textContent || 'Элемента';
+                showNotification(`Просмотр деталей: ${itemName}`, 'info');
+            });
+        });
+        
+        // Calendar picker for charts
+        document.querySelectorAll('.btn-icon .fa-calendar').forEach(icon => {
+            icon.closest('button').addEventListener('click', function() {
+                showNotification('Выбор периода для графика', 'info');
+            });
+        });
+        
+        // Sync button
+        document.querySelectorAll('.btn-icon .fa-sync').forEach(icon => {
+            icon.closest('button').addEventListener('click', function() {
+                showNotification('Обновление данных...', 'info');
+                
+                // Simulate refresh
+                setTimeout(() => {
+                    showNotification('Данные успешно обновлены', 'success');
+                }, 1000);
+            });
+        });
+        
+        // Help button
+        document.querySelector('.fa-question-circle').closest('.action-btn').addEventListener('click', function() {
+            showNotification('Открывается документация и помощь', 'info');
+        });
+        
+        // Initialize everything
+        initializeTables();
+        
+        // Demo data refresh simulation
+        setInterval(() => {
+            // Update notification badge randomly
+            const badge = document.querySelector('.notification-badge');
+            if (badge && Math.random() > 0.7) {
+                badge.style.display = 'block';
+            }
+            
+            // Update some random stats
+            const statCards = document.querySelectorAll('.stat-card');
+            if (statCards.length > 0 && Math.random() > 0.8) {
+                const randomCard = statCards[Math.floor(Math.random() * statCards.length)];
+                const statValue = randomCard.querySelector('.stat-value');
+                const statChange = randomCard.querySelector('.stat-change');
+                
+                if (statValue && statChange) {
+                    const currentValue = parseFloat(statValue.textContent.replace(/[^\d.-]/g, ''));
+                    const change = Math.random() > 0.5 ? 1 : -1;
+                    const newValue = currentValue + change * Math.random() * 50;
+                    
+                    statValue.textContent = newValue.toLocaleString('ru-RU') + (statValue.textContent.includes('€') ? ' €' : '');
+                    
+                    // Update change indicator
+                    if (change > 0) {
+                        statChange.innerHTML = `<i class="fas fa-arrow-up"></i> <span>+${(Math.random() * 10).toFixed(1)}%</span>`;
+                        statChange.className = 'stat-change change-up';
+                    } else {
+                        statChange.innerHTML = `<i class="fas fa-arrow-down"></i> <span>-${(Math.random() * 5).toFixed(1)}%</span>`;
+                        statChange.className = 'stat-change change-down';
+                    }
+                }
+            }
+        }, 10000); // Update every 10 seconds
+        
+        // Quick actions for dashboard
+        const quickActions = [
+            { icon: 'fa-plus', label: 'Быстрое добавление', section: 'add-product' },
+            { icon: 'fa-chart-pie', label: 'Аналитика', section: 'sales' },
+            { icon: 'fa-cog', label: 'Настройки', section: 'settings' },
+            { icon: 'fa-users', label: 'Клиенты', section: 'customers' }
+        ];
+        
+        // Add quick actions to dashboard
+        const dashboardSection = document.getElementById('dashboard-section');
+        if (dashboardSection) {
+            const quickActionsDiv = document.createElement('div');
+            quickActionsDiv.className = 'overview-cards';
+            quickActionsDiv.style.marginTop = '40px';
+            
+            quickActions.forEach(action => {
+                const card = document.createElement('div');
+                card.className = 'stat-card';
+                card.style.cursor = 'pointer';
+                card.style.textAlign = 'center';
+                card.style.flexDirection = 'column';
+                card.style.gap = '15px';
+                
+                card.innerHTML = `
+                    <div class="stat-icon">
+                        <i class="fas ${action.icon}"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-title">${action.label}</div>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => showSection(action.section));
+                
+                quickActionsDiv.appendChild(card);
+            });
+            
+            dashboardSection.querySelector('.dashboard-overview').appendChild(quickActionsDiv);
+        }
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl + / for search focus
+            if (e.ctrlKey && e.key === '/') {
+                e.preventDefault();
+                const searchInput = document.querySelector('.search-input');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }
+            
+            // Ctrl + D for dashboard
+            if (e.ctrlKey && e.key === 'd') {
+                e.preventDefault();
+                showSection('dashboard');
+            }
+            
+            // Ctrl + P for products
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                showSection('products');
+            }
+            
+            // Ctrl + O for orders
+            if (e.ctrlKey && e.key === 'o') {
+                e.preventDefault();
+                showSection('orders');
+            }
+            
+            // Ctrl + S for settings
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                showSection('settings');
+            }
+            
+            // Escape to close sidebar on mobile
+            if (e.key === 'Escape' && window.innerWidth <= 992) {
+                adminSidebar.classList.remove('active');
+            }
+        });
+        
+        // Add help tooltip for shortcuts
+        setTimeout(() => {
+            showNotification('Используйте Ctrl+/ для поиска, Ctrl+D для дашборда, Ctrl+P для товаров, Ctrl+O для заказов, Ctrl+S для настроек', 'info');
+        }, 5000);
+        
+        // Add logout confirmation
+        const logoutLink = document.querySelector('.menu-item[href*="logout"]');
+        if (logoutLink) {
+            logoutLink.addEventListener('click', function(e) {
+                if (!confirm('Вы уверены, что хотите выйти из админ-панели?')) {
+                    e.preventDefault();
+                }
+            });
+        }
+        
+        // Add responsive behavior for tables
+        function makeTablesResponsive() {
+            document.querySelectorAll('.table-content').forEach(container => {
+                if (container.scrollWidth > container.clientWidth) {
+                    container.style.border = '1px solid var(--border-color)';
+                    container.style.borderRadius = 'var(--radius-md)';
+                }
+            });
+        }
+        
+        window.addEventListener('resize', makeTablesResponsive);
+        makeTablesResponsive();
+    });
+</script>
+{% endblock %}
